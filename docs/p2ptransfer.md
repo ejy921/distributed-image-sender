@@ -26,5 +26,9 @@ They are neither sender nor receiver. Transfer the message in the network as sta
 
 ### Twins
 
-For the sake of the complexity level, we share encryption key outside of this program (through terminal) because secure secret key transfer requires advanced implementation.
-When connected to network, the system asks for the pair's information.
+For the sake of complexity, we share encryption key outside of this program (through terminal) because secure secret key transfer requires advanced implementation like Public-key cryptography.
+When connected to network, the system asks for the pair's information and shared private key.
+
+### Attacker (Optional)
+
+Behaves identical to Normal User. However, They try to decrypt the message by bruteforcing the key. They can either keep eavesdropping, or manipulate message furing transfer.
