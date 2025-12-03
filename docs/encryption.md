@@ -6,7 +6,7 @@
 char* encrypt(char* content, size_t len, uint32_t key)`
 ```
 
-Encrypts the message in-memory.
+Encrypts the message in-memory. Encryption and decryption does not modify the length of content.
 
 input:
 
