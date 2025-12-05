@@ -26,6 +26,8 @@ const char* username;
 
 void add_peer(int peer_socket, char* peer_username) {
   peer_list_t *new_peer = malloc(sizeof(peer_list_t));
+  new_peer->username = NULL;
+  
   if (new_peer == NULL)
   {
     perror("malloc failed");
@@ -35,12 +37,19 @@ void add_peer(int peer_socket, char* peer_username) {
   // case that list is null;
   if (list == NULL) {
     list = new_peer;
+    list->socket_fd = peer_socket;
+    list->username = malloc(sizeof(char) * 50);
+    list->username = peer_username;
+    // char insert[50];
+    // sprintf(insert, "First peer %s", list->username);
     return;
+
   }
   // otherwise not null
   new_peer->socket_fd = peer_socket;
   new_peer->username = malloc(sizeof(char) * 50);
-  strcpy(new_peer->username, peer_username);
+  new_peer->username = peer_username;
+  // strcpy(new_peer->username, peer_username);
   new_peer->next = list;
   list = new_peer;
 }
@@ -53,8 +62,9 @@ void input_callback(const char* message) {
     ui_display(username, message);
     // send message to everybody
     for (peer_list_t* curr = list; curr != NULL; curr = curr->next) {
+      // ui_display("name", curr->username);
       char msg[50];
-      sprintf(msg, "curr socket_fd %d", curr->socket_fd);
+      sprintf(msg, "curr socekt_fd %d", curr->socket_fd);
       ui_display("INFO", msg);
       if (fcntl(curr->socket_fd, F_GETFD) == -1) {
         ui_display("ERR", "file descriptor bad?");
@@ -74,6 +84,12 @@ void *connection_thread(void *peer_socket_fd)
   int peer_socket = (int) (long) peer_socket_fd;
 
   char *message = receive_message(peer_socket);
+
+  if (message == NULL)
+  {
+    perror("Failed to read message from client");
+    exit(EXIT_FAILURE);
+  }
 
   while (strcmp(message, "quit\n") != 0)
   {

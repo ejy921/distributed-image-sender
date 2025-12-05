@@ -2,7 +2,10 @@
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
+<<<<<<< HEAD
 #include <string.h>
+=======
+>>>>>>> 88745d425eda42dad16873d8cecb693381c03986
 #define NUM_COLORS 27
 #define OFFSET 97
 
