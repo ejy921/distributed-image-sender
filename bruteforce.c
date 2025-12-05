@@ -1,9 +1,18 @@
+#include "bruteforce.h"
 #include "encryption.h"
 #include <ctype.h>
+#include <pthread.h>
+#include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+// Set parallelization thread number
+#define NUM_THREAD 10
+
+pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
 /**
  * Checks if the decrypted data has valid character and order
@@ -30,33 +39,31 @@ static int is_valid_encoding(const char *data, size_t len) {
  * Brute force attack to find the encryption key
  * Searches through all possible 32-bit keys (0x00000000 to 0xFFFFFFFF)
  *
- * @param encrypted Encrypted data buffer
- * @param len Length of the encrypted data
- * @return Decrypted data in char * (caller must free)
+ * @param input The input as candidate_t* type
+ * @return Decrypted data. If not found, return null
  */
-char *key_bruteforce(const char *encrypted, size_t len) {
-  if (encrypted == NULL || len == 0) {
+void *key_bruteforce(void *input) {
+  candidate_t *candidate = (candidate_t *)input;
+  size_t len = candidate->len;
+  if (candidate->encrypted == NULL || len == 0) {
     return NULL;
   }
 
   // Create a working copy of the encrypted data
   // (decrypt modifies the buffer in-place, so we need to preserve the original)
-  char *working_buffer = (char *)malloc(len);
+  char *working_buffer = (char *)malloc(candidate->len);
   if (working_buffer == NULL) {
     fprintf(stderr, "Error: Memory allocation failed\n");
     return NULL;
   }
-
-  printf("Starting brute force attack...\n");
-  printf("Searching through 2^32 possible keys...\n");
-
   // Search through all possible 32-bit keys
-  uint32_t key = 0;
+  uint64_t key = candidate->mode;
+  uint64_t max = 0xffffffff;
 
-  do {
+  while (key < max && !(*candidate->done)) {
     // Copy encrypted data to working buffer because decryption takes place
     // in-memory
-    memcpy(working_buffer, encrypted, len);
+    memcpy(working_buffer, candidate->encrypted, len);
 
     // Try to decrypt with current key
     char *decrypted = decrypt(working_buffer, len, key);
@@ -65,27 +72,51 @@ char *key_bruteforce(const char *encrypted, size_t len) {
       continue;
     // Check if the data is encoded properly
     if (is_valid_encoding(decrypted, len)) {
-      printf("\n*** KEY FOUND! ***\n");
-      printf("Key (hex): %08x\n", key);
 
-      // Print decrypted text
-      printf("Decrypted text: ");
-      for (size_t i = 0; i < len; i++) {
-        printf("%c", decrypted[i]);
-      }
-      printf("\n");
-      return working_buffer;
+      // Set result
+      pthread_mutex_lock(&lock);
+      *candidate->done = true;
+      memcpy(candidate->decrypted, decrypted, len);
+      *candidate->key = key;
+      pthread_mutex_unlock(&lock);
+
+      return candidate;
     }
-    key++;
-  } while (key != 0); // Loop until 32-bit variable overflows and becomes 0
+    key += NUM_THREAD; // n thread, skip n
+  }
 
-  free(working_buffer);
-  printf("\nKey not found.\n");
-
-  return NULL;
+  return candidate;
 }
 
-#ifdef STANDALONE
+crack_t *crack(crack_t *input) {
+
+  candidate_t candidates[NUM_THREAD];
+  pthread_t threads[NUM_THREAD];
+
+  bool done = false;
+  char *decrypted = (char *)malloc(input->len);
+  uint32_t key = 0;
+  for (int i = 0; i < NUM_THREAD; i++) {
+    candidates[i].len = input->len;
+    candidates[i].decrypted = decrypted; // Shared
+    candidates[i].mode = i;
+    candidates[i].done = &done; // shared value
+    candidates[i].key = &key;   // shared value
+
+    candidates[i].encrypted = input->encrypted; // shared
+    pthread_create(&threads[i], NULL, key_bruteforce, &candidates[i]);
+  }
+
+  for (int i = 0; i < NUM_THREAD; i++) {
+    pthread_join(threads[i], NULL);
+  }
+
+  memcpy(input->decrypted, decrypted, input->len);
+  input->key = *candidates[0].key;
+
+  return input;
+}
+
 // Example usage
 int main() {
   // Default test case: "HelloWorld123" encrypted with key 0x12345678
@@ -108,10 +139,15 @@ int main() {
   }
   printf("\n\n");
 
-  key_bruteforce((const char *)test_encrypted, test_len);
+  crack_t crack_data;
+  crack_data.encrypted = test_encrypted;
+  crack_data.len = test_len;
+
+  crack(&crack_data);
+
+  printf("Decrypted key: %08x\n", crack_data.key);
+  printf("Decrypted Text: %s\n", crack_data.decrypted);
 
   free(test_encrypted);
   return 0;
 }
-#endif
-
