@@ -115,6 +115,8 @@ crack_t *crack(crack_t *input) {
   return input;
 }
 
+// Adding main function to avoid linker error
+#ifdef STANDALONE
 // Example usage
 int main() {
   // Default test case: "HelloWorld123" encrypted with key 0x12345678
@@ -149,3 +151,4 @@ int main() {
   free(test_encrypted);
   return 0;
 }
+#endif
