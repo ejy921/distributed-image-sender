@@ -7,6 +7,8 @@
 #ifndef BRUTEFORCE_H
 #define BRUTEFORCE_H
 
+#define NUM_THREAD 10
+
 typedef struct {
   char *encrypted;
   char *decrypted;

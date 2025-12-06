@@ -9,8 +9,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-// Set parallelization thread number
-#define NUM_THREAD 10
 
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
