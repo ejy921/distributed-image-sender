@@ -45,3 +45,18 @@ chat_message_t create_message_direct(char* content, size_t len, char* sendername
     };
     return msg;
 }
+
+/**
+* Given name and private key, create struct for dm_user.
+* @param name name of user to dm with
+* @param key private key. Two user have to have same key registered.
+* @return user_t type user.
+*/
+
+user_t create_dm_user(char* name, char* key){
+    user_t user = {
+        .name= name,
+        .key = hex_string_to_uint32(key)
+    };
+    return user;
+}
