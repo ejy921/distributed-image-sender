@@ -9,7 +9,7 @@ typedef struct {
     char* receivername; //userid of destination
     char* sendername; // username of sender
     bool encrypted;
-} messsage_t;
+} chat_messsage_t;
 ```
 
 ## Network Rule
