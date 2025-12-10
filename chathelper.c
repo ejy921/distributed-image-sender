@@ -60,3 +60,34 @@ user_t create_dm_user(char* name, char* key){
     };
     return user;
 }
+
+/**
+* Parse commandline argument. Example: `./p2pchat u_1 -h localhost -p 65535 -u u_2 -k 1234abcd`
+* @param dest The information to connect network. If no info given, it will be NULL. Default host is localhost.
+* @param user DM pair registration. If omitted, NULL.
+* @param argc Number of arguments
+* @param argv Arguments
+*/
+void parse_args(int argc, char** argv, destination_t* dest, user_t* user){
+    // set default
+    dest->host = "localhost";
+
+    for (int i=2; i<argc; i++){
+        if (strcmp(argv[i], "-h") == 0){ // if -h is given, set host
+            dest->host = argv[i+1];
+            i++;
+        } else if (strcmp(argv[i], "-p") == 0){ // if -p is given, set port
+            dest->port = atoi(argv[i+1]);
+            i++;
+        } else if (strcmp(argv[i], "-u") == 0){ // if -u is given, set user name
+            user->name = argv[i+1];
+            i++;
+        } else if (strcmp(argv[i], "-k") == 0){ // if -k is given, set user key
+            user->key = hex_string_to_uint32(argv[i+1]);
+            i++;
+        } else { // if unknown argument is given, print error and exit
+            fprintf(stderr, "Unknown argument: %s\n", argv[i]);
+            exit(1);
+        }
+    }
+}

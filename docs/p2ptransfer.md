@@ -34,22 +34,12 @@ n
 ### DM-pair
 
 For the sake of complexity, we share encryption key outside of this program (through terminal) because secure secret key transfer requires advanced implementation like Public-key cryptography.
-When connected to network, the system asks for the pair's information and shared private key.
 
-Prompt:
+Example:
 
 ```bash
-$ Add DM participant?(y/n)
-y
-$ Type in their username:
-pairname
-$ Type in secret key:
-1234abcd
-$ DM participant added.
-
+./p2pchat u_1 -h localhost -p 65535 -u u_2 -k 1234abcd
 ```
-
-Then we get:
 
 ```c
 typedef struct {
