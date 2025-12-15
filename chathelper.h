@@ -25,13 +25,18 @@ typedef struct {
     bool encrypted;
 } chat_message_t;
 
+// Non-encrypted message
 chat_message_t create_message_everyone(char* content, size_t len, char* sendername);
+
+// Encrypted message with key shared with dm-pair
 chat_message_t create_message_direct(char* content, size_t len, char* sendername, user_t dm_user);
+
+// Parse command line arguments
 void parse_args(int argc, char** argv, destination_t* dest, user_t* user);
 
 
 /**
- * Decrypt the message with the key. Function will decrypt the message in place and set encrypted to false.
+ * Decrypt the message with the key. Function will decrypt the message in place and set encrypted flag to false.
  * * Encrypted message will be overwritten.
  * @param message The message to decrypt
  * @param key The key to decrypt the message
@@ -40,7 +45,7 @@ void decrypt_message(chat_message_t* message, uint32_t key);
 /**
  * Bruteforce the key to decrypt the message. Message conent will be decrypted in place and key will be stored in the pointer.
  * * Encrypted message will be overwritten.
- * * In demo, use key less than 0x05000000 to reduce runtime.
+ * * In demo, use key less than 0x05000000 when you encrypt message, in order to reduce bruteforceruntime.
  * @param message The message to decrypt
  * @param key Pointer to the key to store the result
  */
