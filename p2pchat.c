@@ -6,7 +6,7 @@
 #include <unistd.h>
 #include <stdint.h>
 #include <fcntl.h>
-
+#include "chathelper.h"
 #include "message.h"
 #include "socket.h"
 #include "ui.h"
@@ -24,6 +24,7 @@ peer_list_t* list = NULL;
 
 // Keep the username in a global so we can access it from the callback
 const char* username;
+user_t *dm_user;
 
 // Add peer to global peer list
 void add_peer(int peer_socket, char* peer_username) {
@@ -257,13 +258,17 @@ void* listener_thread(void* input)
 
 int main(int argc, char** argv) {
   // Make sure the arguments include a username
-  if (argc != 2 && argc != 4) {
-    fprintf(stderr, "Usage: %s <username> [<peer> <port number>]\n", argv[0]);
+  if (argc % 2 != 0) {
+    fprintf(stderr, "Usage: %s <username> \nOptions: \n-h <peer> \t: Peer destination (Default localhost)\n-p <port> \t: Peer port number \n-u <username> \t: Username of DM pair \n-k <key>\t: Encryption key shared with DM pair, hexchar[8]\n", argv[0]);
     exit(1);
   }
 
+  // allocate memory to parse command line argument
+  destination_t *dest = malloc(sizeof(destination_t));
+  dm_user = malloc(sizeof(user_t));
   // Save the username in a global
   username = argv[1];
+  parse_args(argc, argv, dest, dm_user);
 
   unsigned short port = 0;
   int server_socket_fd = server_socket_open(&port);
@@ -281,15 +286,11 @@ int main(int argc, char** argv) {
   printf("%s", port_msg);
 
   // Did the user specify a peer we should connect to?
-  if (argc == 4) {
-    // Unpack arguments
-    char* peer_hostname = argv[2];
-    unsigned short peer_port = atoi(argv[3]);
-
+  if (dest != NULL) {
     // Connect to the server
-    int socket_fd = socket_connect(peer_hostname, peer_port);
+    int socket_fd = socket_connect(dest->host, dest->port);
     if (socket_fd == -1) {
-      fprintf(stderr, "Warning: failed to connect to %s:%d\n", peer_hostname, peer_port);
+      fprintf(stderr, "Warning: failed to connect to %s:%d\n", dest->host, dest->port);
       perror("Failed to connect");
     } else {
       // let peer know we exist
@@ -331,6 +332,9 @@ int main(int argc, char** argv) {
   // Cleanup
   pthread_cancel(listener_p);
   close(server_socket_fd);
+
+  free(dest);
+  free(dm_user);
   // close peer sockets
   return 0;
 }

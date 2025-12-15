@@ -10,7 +10,7 @@
 #include <string.h>
 
 
-pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
 /**
  * Checks if the decrypted data has valid character and order
