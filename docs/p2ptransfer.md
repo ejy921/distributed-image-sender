@@ -26,11 +26,6 @@ typedef struct {
 
 They are neither sender nor receiver. Transfer the message in the network as stated.
 
-```bash
-$ Add DM participant?(y/n)
-n
-```
-
 ### DM-pair
 
 For the sake of complexity, we share encryption key outside of this program (through terminal) because secure secret key transfer requires advanced implementation like Public-key cryptography.
