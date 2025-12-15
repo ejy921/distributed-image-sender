@@ -2,6 +2,14 @@
 
 #define MAX_MESSAGE_LENGTH 2048
 
+// typedef struct {
+//   char* content; // encrypted image content
+//   size_t len; 
+//   char* receivername;
+//   char* sendername;
+//   bool encrypted;
+// } message_t;
+
 // Send a across a socket with a header that includes the message length. Returns non-zero value if
 // an error occurs.
 int send_message(int fd, char *message);

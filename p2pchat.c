@@ -16,102 +16,189 @@ pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 typedef struct peer_node {
   int socket_fd;
   char* username;
+  char* host;
   struct peer_node* next;
 } peer_list_t;
 
-peer_list_t* list;
+peer_list_t* list = NULL;
 
 // Keep the username in a global so we can access it from the callback
 const char* username;
 
+// Add peer to global peer list
 void add_peer(int peer_socket, char* peer_username) {
+  pthread_mutex_lock(&lock);
+  // initialize and malloc new peer list
   peer_list_t *new_peer = malloc(sizeof(peer_list_t));
-  new_peer->username = NULL;
-  
   if (new_peer == NULL)
   {
     perror("malloc failed");
-    exit(1);
-  }
-
-  // case that list is null;
-  if (list == NULL) {
-    list = new_peer;
-    list->socket_fd = peer_socket;
-    list->username = malloc(sizeof(char) * 50);
-    list->username = peer_username;
-    // char insert[50];
-    // sprintf(insert, "First peer %s", list->username);
+    pthread_mutex_unlock(&lock);
     return;
-
   }
-  // otherwise not null
+  // add new peer to list
   new_peer->socket_fd = peer_socket;
-  new_peer->username = malloc(sizeof(char) * 50);
-  new_peer->username = peer_username;
-  // strcpy(new_peer->username, peer_username);
+  new_peer->username = strdup(peer_username);
+  if (new_peer->username == NULL) {
+    perror("strdup failed");
+    // free new_peer
+    free(new_peer);
+    pthread_mutex_unlock(&lock);
+    return;
+  }
   new_peer->next = list;
   list = new_peer;
+
+  pthread_mutex_unlock(&lock);
 }
+
+// Remove and free a peer by closing socket and freeing the username when a connection
+// dies or a user quits
+void remove_peer (int peer_socket) {
+  pthread_mutex_lock(&lock);
+
+  peer_list_t* prev = NULL;
+  // traverse through list to find the peer according to peer_socket
+  for (peer_list_t* curr = list; curr != NULL; prev = curr, curr = curr->next) {
+    if (curr->socket_fd == peer_socket) {
+      // if prev list was empty
+      if (prev == NULL) {
+        list = curr->next;
+      } else { // if not, attach to head
+        prev->next = curr->next;
+      }
+      // close socket
+      close(curr->socket_fd);
+      // free curr and curr username
+      free(curr->username);
+      free(curr);
+      break;
+    }
+  }
+
+  pthread_mutex_unlock(&lock);
+}
+
 
 // This function is run whenever the user hits enter after typing a message
 void input_callback(const char* message) {
+  // exit if user types :quit or :q
   if (strcmp(message, ":quit") == 0 || strcmp(message, ":q") == 0) {
     ui_exit();
-  } else {
-    ui_display(username, message);
-    // send message to everybody
-    for (peer_list_t* curr = list; curr != NULL; curr = curr->next) {
-      // ui_display("name", curr->username);
-      char msg[50];
-      sprintf(msg, "curr socekt_fd %d", curr->socket_fd);
-      ui_display("INFO", msg);
-      if (fcntl(curr->socket_fd, F_GETFD) == -1) {
-        ui_display("ERR", "file descriptor bad?");
-        continue;
-      }
-      if (send_message(curr->socket_fd, (char *)message) == -1) {
-        perror("could not send message to peer");
-        exit(EXIT_FAILURE);
+    return;
+  } 
+  ui_display(username, message);
+
+  pthread_mutex_lock(&lock);
+  // send message to peer
+  for (peer_list_t* curr = list; curr != NULL; curr = curr->next) {
+    if (fcntl(curr->socket_fd, F_GETFD) == -1) {
+      ui_display("ERR", "file descriptor bad?");
+      continue;
+    }
+    if (send_message(curr->socket_fd, (char *)message) == -1) {
+      perror("could not send message to peer");
+    }
+  }
+
+  pthread_mutex_unlock(&lock);
+
+}
+
+// forward message to all peers except sender
+void forward_to_all(int sender_socket, const char* message) {
+  pthread_mutex_lock(&lock);
+  // traverse through list to send to all peers
+  for (peer_list_t* curr = list; curr != NULL; curr = curr->next) {
+    if (curr->socket_fd != sender_socket) {
+      if (send_message(curr->socket_fd, (char*) message) == -1) {
+        perror("couldn't forward message to peer");
       }
     }
   }
+  pthread_mutex_unlock(&lock);
+}
+
+// traverse through peer list and return pointer to username stored in list
+// (caller must not free). return NULL is not found
+char* get_username(int peer_socket) {
+  pthread_mutex_lock(&lock);
+  for (peer_list_t* curr = list; curr != NULL; curr = curr->next) {
+    if (curr->socket_fd == peer_socket) {
+      // get username with the peer_socket fd
+      char* uname = curr->username; 
+      pthread_mutex_unlock(&lock);
+      return uname;
+    }
+  }
+  pthread_mutex_unlock(&lock);
+  // if not return NULL
+  return NULL;
 }
 
 // this is a 1-on-1 connection with a peer
 void *connection_thread(void *peer_socket_fd)
 {
   int peer_socket = (int) (long) peer_socket_fd;
+  char *list_uname = get_username(peer_socket);
+  char *peer_username = NULL;
 
-  char *message = receive_message(peer_socket);
-
-  if (message == NULL)
-  {
-    perror("Failed to read message from client");
-    exit(EXIT_FAILURE);
+  // if username gotten from list is not NULL
+  if (list_uname != NULL) {
+    peer_username = strdup(list_uname);
+    if (peer_username == NULL) {
+      perror("strdup failed for peer_user");
+      // still proceed
+      peer_username = strdup("Unknown");
+      // just in case
+      if (peer_username == NULL) {
+        // close thread cleanly
+        close(peer_socket);
+        return NULL;
+      }
+    }
+  } else { // if it is NULL
+    peer_username = strdup("Unknown");
+    if (peer_username == NULL) {
+      close(peer_socket);
+      return NULL;
+    }
   }
 
-  while (strcmp(message, "quit\n") != 0)
-  {
+  // main receive loop
+  while (true) {
+    char *message = receive_message(peer_socket);
+    // if message is NULL, take it as peer has disconnected
     if (message == NULL)
     {
-      perror("Failed to read message from client");
-      exit(EXIT_FAILURE);
+      ui_display(peer_username, "** disconnected **");
+      break;
+    }
+    // display message
+    ui_display(peer_username, message);
+
+    if (strcmp(message, ":quit\n") == 0) {
+      free(message);
+      ui_display(peer_username, "** sent quit **");
+      break;
     }
 
-    printf("Client sent %s", message);
-    message = receive_message(peer_socket);
-    ui_display("other peer", message);
+    // forward message to other peers
+    forward_to_all(peer_socket, message);
+    // free message after forwarding
+    free(message);
   }
+  // clean up peer (remove from list)
+  remove_peer(peer_socket);
+  // free local copy of username
+  free(peer_username);
   return NULL;
 }
 
 // listens for connections.
-// when it encounters a connection, it:
-// - sends out to the existing peers that somebody's trying to connect
-// - adds the connection to it's own peer list
-// - acknowledges the peer by sending back a message
-// - creates a new connection
+// when encountering a connection, let's existing peers know and 
+// add connection to peer list. then acknowledge peer by sending back 
+// a message (just the username) and creates a new connection
 void* listener_thread(void* input)
 {
   int server_socket_fd = (int) (long) input;
@@ -122,22 +209,49 @@ void* listener_thread(void* input)
     if (peer_client_socket == -1)
     {
       perror("accept failed");
-      exit(EXIT_FAILURE);
+      // keep trying
+      continue;
     }
-    // TODO: sends out to the existing peers that somebody's trying to connect
 
-    // acknowledge connection
+    // acknowledge connection and receive + send message (username only)
     char *peer_username = receive_message(peer_client_socket);
+    if (peer_username == NULL) {
+      perror("Failed to receive username from peer");
+      close(peer_client_socket);
+      continue;
+    }
     send_message(peer_client_socket, (char *)username);
 
     // add the connection to peer list
     add_peer(peer_client_socket, peer_username);
 
-    // create a new connection
+    // notify all peers about new peer
+    pthread_mutex_lock(&lock);
+    for (peer_list_t* curr = list; curr != NULL; curr = curr->next) {
+      if (curr->socket_fd != peer_client_socket) {
+        send_message(curr->socket_fd, "NEW_PEER");
+      }
+    }
+    pthread_mutex_unlock(&lock);
+
+
+    // notify new peer about all existing peers
+    pthread_mutex_lock(&lock);
+    for (peer_list_t *curr = list; curr != NULL; curr = curr->next)
+    {
+      if (curr->socket_fd != peer_client_socket) {
+        send_message(peer_client_socket, "EXISTING_PEER");
+      }
+    }
+    pthread_mutex_unlock(&lock);
+
+    // create a new connection thread
     pthread_t connection_p;
     pthread_create(&connection_p, NULL, connection_thread, (void *)(long)peer_client_socket);
 
     ui_display(peer_username, "** connected **");
+    // free username since it's copied in list
+    free(peer_username);
   }
 }
 
@@ -174,26 +288,30 @@ int main(int argc, char** argv) {
 
     // Connect to the server
     int socket_fd = socket_connect(peer_hostname, peer_port);
-    if (socket_fd == -1)
-    {
+    if (socket_fd == -1) {
+      fprintf(stderr, "Warning: failed to connect to %s:%d\n", peer_hostname, peer_port);
       perror("Failed to connect");
-      exit(EXIT_FAILURE);
+    } else {
+      // let peer know we exist
+      send_message(socket_fd, (char*) username);
+      char *peer_username = receive_message(socket_fd);
+      if (peer_username == NULL) {
+        perror("Failed to receive username");
+        close(socket_fd);
+        socket_fd = -1;
+      } else { // if received message(username) from peer
+        // add peer to peer_list
+        add_peer(socket_fd, peer_username);
+        printf("Connected to peer %s\n", peer_username);
+        
+        pthread_t connection_p;
+        pthread_create(&connection_p, NULL, connection_thread, (void *)(long)socket_fd);
+        // free username since copied to list
+        free(peer_username);
+      }
+
+
     }
-    printf("Connected to peer %s\n", peer_hostname);
-  
-    // let peer know we exist
-    char existence_msg[50];
-    sprintf(existence_msg, "%s", username);
-    send_message(socket_fd, existence_msg);
-    char* peer_username = receive_message(socket_fd);
-
-    // add peer to peer_list
-    add_peer(socket_fd, peer_username);
-
-    pthread_t connection_p;
-    pthread_create(&connection_p, NULL, connection_thread, (void*) (long) socket_fd);
-
-    sprintf(port_msg, "initial socket fd: %d", socket_fd);
   }
 
   // Set up the user interface. The input_callback function will be called
