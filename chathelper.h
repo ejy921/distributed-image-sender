@@ -18,11 +18,11 @@ typedef struct{
 
 
 typedef struct {
-    char* content; // Image content, encrypted
+    char* content; // Image content, encrypted or not
     size_t len; // Length of content as array
     char* receivername; //userid of destination
     char* sendername; // username of sender
-    bool encrypted;
+    bool encrypted; // true if message is encrypted, false if not
 } chat_message_t;
 
 // Non-encrypted message
