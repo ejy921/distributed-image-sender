@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "encryption.h"
 
 /**
  * Generates a 32-bit random number using XORShift algorithm
@@ -106,3 +107,38 @@ char *decrypt(char *encrypted, size_t len, uint32_t key) {
   // Decryption is the same as encryption
   return encrypt(encrypted, len, key);
 }
+
+// Adding main function to avoid linker error
+#ifdef STANDALONE
+// Example usage for standalone executable
+int main() {
+  // Test encryption and decryption
+  char test_plaintext[] = "HelloWorld123";
+  uint32_t test_key = 0x12345678;
+  size_t test_len = strlen(test_plaintext);
+
+  // Encrypt the test data
+  char *test_encrypted = (char *)malloc(test_len);
+  if (test_encrypted == NULL) {
+    fprintf(stderr, "Error: Memory allocation failed\n");
+    return 1;
+  }
+  memcpy(test_encrypted, test_plaintext, test_len);
+  encrypt(test_encrypted, test_len, test_key);
+
+  printf("Plaintext: %s\n", test_plaintext);
+  printf("Key: 0x%08x\n", test_key);
+  printf("Encrypted (hex): ");
+  for (size_t i = 0; i < test_len; i++) {
+    printf("%02x ", (unsigned char)test_encrypted[i]);
+  }
+  printf("\n");
+
+  // Decrypt the test data
+  decrypt(test_encrypted, test_len, test_key);
+  printf("Decrypted: %s\n", test_encrypted);
+
+  free(test_encrypted);
+  return 0;
+}
+#endif
