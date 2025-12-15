@@ -5,7 +5,7 @@
 #include <string.h>
 #include "chathelper.h"
 #include "encryption.h"
-
+#include "bruteforce.h"
 
 /**
  * Given message information, the function will fill message struct and return. The message is not encrypted.
@@ -45,6 +45,29 @@ chat_message_t create_message_direct(char* content, size_t len, char* sendername
     };
     return msg;
 }
+
+/**
+ * Decrypt the message with the key
+ * @param message The message to decrypt
+ * @param key The key to decrypt the message
+ */
+void decrypt_message(chat_message_t* message, uint32_t key){
+    decrypt(message->content, message->len, key);
+    message->encrypted = false;
+}
+
+/**
+ * Bruteforce the key to decrypt the message. Message conent will be decrypted in place and key will be stored in the pointer.
+ * @param message The message to decrypt
+ * @param key Pointer to the key to store the result
+ */
+void bruteforce_message(chat_message_t* message, uint32_t* key){
+    // Bruteforce to find the key
+    *key = crack(message->content, message->len);
+    // Decrypt the message in place
+    decrypt_message(message, *key);
+}
+
 
 /**
 * Given name and private key, create struct for dm_user.

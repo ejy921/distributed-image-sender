@@ -19,11 +19,10 @@ typedef struct {
 } candidate_t;
 #endif
 
-typedef struct {
-  char *encrypted;
-  char *decrypted;
-  size_t len;
-  uint32_t key;
-} crack_t;
-
-crack_t *crack(crack_t *input);
+/**
+ * Bruteforce the key to decrypt the message
+ * @param encrypted The encrypted message
+ * @param len The length of the encrypted message
+ * @return The key found
+ */
+uint32_t crack(char* encrypted, size_t len);

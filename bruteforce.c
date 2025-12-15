@@ -86,22 +86,22 @@ void *key_bruteforce(void *input) {
   return candidate;
 }
 
-crack_t *crack(crack_t *input) {
+uint32_t crack(char* encrypted, size_t len) {
 
   candidate_t candidates[NUM_THREAD];
   pthread_t threads[NUM_THREAD];
 
   bool done = false;
-  char *decrypted = (char *)malloc(input->len);
+  char *decrypted = (char *)malloc(len);
   uint32_t key = 0;
   for (int i = 0; i < NUM_THREAD; i++) {
-    candidates[i].len = input->len;
+    candidates[i].len = len;
     candidates[i].decrypted = decrypted; // Shared
     candidates[i].mode = i;
     candidates[i].done = &done; // shared value
     candidates[i].key = &key;   // shared value
 
-    candidates[i].encrypted = input->encrypted; // shared
+    candidates[i].encrypted = encrypted; // shared
     pthread_create(&threads[i], NULL, key_bruteforce, &candidates[i]);
   }
 
@@ -109,46 +109,7 @@ crack_t *crack(crack_t *input) {
     pthread_join(threads[i], NULL);
   }
 
-  memcpy(input->decrypted, decrypted, input->len);
-  input->key = *candidates[0].key;
-
-  return input;
+  key = *candidates[0].key;
+  free(decrypted);
+  return key;
 }
-
-// Adding main function to avoid linker error
-#ifdef STANDALONE
-// Example usage
-int main() {
-  // Default test case: "HelloWorld123" encrypted with key 0x12345678
-  // This is a simple test case with alphanumeric-only plaintext
-  // Create a test case: encrypt "HelloWorld123" with a known key
-  char test_plaintext[] = "HelloWorld123fewwehur483h5u54fj";
-  uint32_t test_key = 0x12345678;
-  size_t test_len = strlen(test_plaintext);
-
-  // Encrypt the test data
-  char *test_encrypted = (char *)malloc(test_len);
-  memcpy(test_encrypted, test_plaintext, test_len);
-  encrypt(test_encrypted, test_len, test_key);
-
-  printf("Plaintext: %s\n", test_plaintext);
-  printf("Key: 0x%08x\n", test_key);
-  printf("Encrypted (hex): ");
-  for (size_t i = 0; i < test_len; i++) {
-    printf("%02x ", (unsigned char)test_encrypted[i]);
-  }
-  printf("\n\n");
-
-  crack_t crack_data;
-  crack_data.encrypted = test_encrypted;
-  crack_data.len = test_len;
-
-  crack(&crack_data);
-
-  printf("Decrypted key: %08x\n", crack_data.key);
-  printf("Decrypted Text: %s\n", crack_data.decrypted);
-
-  free(test_encrypted);
-  return 0;
-}
-#endif
