@@ -6,6 +6,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdbool.h>
+
+typedef struct {
+  char* content; // encrypted image content
+  size_t len; 
+  char* receivername;
+  char* sendername;
+  bool encrypted;
+} message_t;
+
 
 // Send a across a socket with a header that includes the message length.
 int send_message(int fd, char *message)
