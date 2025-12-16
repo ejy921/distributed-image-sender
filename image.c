@@ -2,10 +2,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
-<<<<<<< HEAD
 #include <string.h>
-=======
->>>>>>> 88745d425eda42dad16873d8cecb693381c03986
 #define NUM_COLORS 27
 #define OFFSET 97
 
@@ -38,6 +35,12 @@ color_t colors[] = {{0, 0, 0},
                     {255, 127, 255}};
 
 int color_to_ch(color_t color) {
+  int color_i = color_distance(color);
+  // return int of character value a-{
+  return color_i + OFFSET;
+}
+
+int color_distance(color_t color) {
   //get three values
   int r = color.r;
   int g = color.g;
@@ -60,8 +63,8 @@ int color_to_ch(color_t color) {
       color_i = i;
     }
   }
-  // return int of character value a-{
-  return color_i + OFFSET;
+  
+  return color_i;
 }
 
 color_t ch_to_color(int c) {
@@ -81,16 +84,22 @@ void fill_file (char* filename, color_t pixels[], int w, int h) {
   fclose(file);
 }
 
-int main(int argc, char** argv) {
-  //For testing
-
-  color_t testcolor = {3, 64, 129};
-  int result = color_to_ch(testcolor);
-  printf("Converted to: %c\n", (char) result);
-  color_t convertback = ch_to_color(result);
-  printf("Converted back to: {%d, %d, %d}\n", convertback.r, convertback.g, convertback.b);
-  color_t test_pixels[] = {{0, 0, 0}, {35, 203, 127}, {200, 150, 254}, {0, 0, 0}, {255, 127, 255}, {255, 255, 255}};
-  fill_file("testfile.txt", test_pixels, 2, 3);
-
+void compressed_file_to_file (compressed_file_t *cf, char* filename){
+FILE* file = fopen(filename, "w");
+fprintf(file,"W:%d\nH:%d\nL:%d\n%s", cf->w, cf->h, cf->contents_length, cf->contents);
 }
+
+// void file_to_compressed_file (char* filename, compressed_file_t * compressed_file) {
+//   FILE* file = fopen(filename, "r");
+//   int w;
+//   int h;
+//   int l;
+//   char * contents;
+//   fscanf(file, "W:%d\nH:%d\nL:%d\n%s", &w, &h, &l, contents);
+// }
+
+color_t get_color(int i) {
+  return colors[i];
+}
+
 
