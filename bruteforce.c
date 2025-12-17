@@ -24,30 +24,41 @@ static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
  * Line 3: L:\d+
  * Line 4: contents: [0-9a-z{]+
  */
-static bool is_valid_encoding(char *data) {
+ static bool is_valid_encoding(char *data) {
   // split by new line
   // use regex to check if the data is valid
   char *line = strtok(data, "\n");
   regex_t regex;
-  regcomp(&regex, "W:\\d+", REG_EXTENDED);
-  if (regexec(&regex, line, 0, NULL, 0) == 0) {
+
+  // Line 1: W: <width>
+  printf("Line 1: %s\n", line);
+  regcomp(&regex, "^W:[0-9]+$", REG_EXTENDED);
+  if (regexec(&regex, line, 0, NULL, 0) != 0) {
     printf("Invalid encoding: %s\n", line);
     return false;
   }
-  regcomp(&regex, "H:\\d+", REG_EXTENDED);
-  if (regexec(&regex, line, 0, NULL, 0) == 0) {
+
+  // Line 2: H: <height>
+  line = strtok(NULL, "\n");
+  printf("Line 2: %s\n", line);
+  regcomp(&regex, "^H:[0-9]+$", REG_EXTENDED);
+  if (regexec(&regex, line, 0, NULL, 0) != 0) {
     printf("Invalid encoding: %s\n", line);
     return false;
   }
-  regcomp(&regex, "L:\\d+", REG_EXTENDED);
-  if (regexec(&regex, line, 0, NULL, 0) == 0) {
+  // Line 3: L: <contents length>
+  line = strtok(NULL, "\n");
+  printf("Line 3: %s\n", line);
+  regcomp(&regex, "^L:[0-9]+$", REG_EXTENDED);
+  if (regexec(&regex, line, 0, NULL, 0) != 0) {
     printf("Invalid encoding: %s\n", line);
     return false;
   }
   regfree(&regex);
 
-  // check if the contents is valid. Regex library seems to work for only <2^15
-  // characters.
+  // Line 4: <contents>
+  // check if the contents is valid. Regex library seems to work for only <2^15 characters.
+  line = strtok(NULL, "\n");
   for (size_t i = 0; line[i] != '\0'; i++) {
     char c = line[i];
     if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || c == '{')) {
