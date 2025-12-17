@@ -2,13 +2,13 @@
 #include "encryption.h"
 #include <ctype.h>
 #include <pthread.h>
+#include <regex.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 
 static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
@@ -18,19 +18,44 @@ static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
  * @param data Decrypted data buffer
  * @param len Length of the data
  * @return 1 if the data is invalid format, 0 otherwise
-
- For now, we check chracters only. To be modified after encoding rule is
- proposed.
+ * Format:
+ * Line 1: W:\d+
+ * Line 2: H:\d+
+ * Line 3: L:\d+
+ * Line 4: contents: [0-9a-z{]+
  */
-static int is_valid_encoding(const char *data, size_t len) {
-  for (size_t i = 0; i < len; i++) {
-    unsigned char c = (unsigned char)data[i];
-    if (!((c >= 'a' && c <= '{') || (c >= 'A' && c <= '[') ||
-          (c >= '0' && c <= '9'))) {
-      return 0;
+static bool is_valid_encoding(char *data) {
+  // split by new line
+  // use regex to check if the data is valid
+  char *line = strtok(data, "\n");
+  regex_t regex;
+  regcomp(&regex, "W:\\d+", REG_EXTENDED);
+  if (regexec(&regex, line, 0, NULL, 0) == 0) {
+    printf("Invalid encoding: %s\n", line);
+    return false;
+  }
+  regcomp(&regex, "H:\\d+", REG_EXTENDED);
+  if (regexec(&regex, line, 0, NULL, 0) == 0) {
+    printf("Invalid encoding: %s\n", line);
+    return false;
+  }
+  regcomp(&regex, "L:\\d+", REG_EXTENDED);
+  if (regexec(&regex, line, 0, NULL, 0) == 0) {
+    printf("Invalid encoding: %s\n", line);
+    return false;
+  }
+  regfree(&regex);
+
+  // check if the contents is valid. Regex library seems to work for only <2^15
+  // characters.
+  for (size_t i = 0; line[i] != '\0'; i++) {
+    char c = line[i];
+    if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || c == '{')) {
+      printf("Invalid encoding: %s\n", line);
+      return false;
     }
   }
-  return 1;
+  return true;
 }
 
 /**
@@ -69,7 +94,7 @@ void *key_bruteforce(void *input) {
     if (decrypted == NULL)
       continue;
     // Check if the data is encoded properly
-    if (is_valid_encoding(decrypted, len)) {
+    if (is_valid_encoding(decrypted)) {
 
       // Set result
       pthread_mutex_lock(&lock);
@@ -86,7 +111,7 @@ void *key_bruteforce(void *input) {
   return candidate;
 }
 
-uint32_t crack(char* encrypted, size_t len) {
+uint32_t crack(char *encrypted, size_t len) {
 
   candidate_t candidates[NUM_THREAD];
   pthread_t threads[NUM_THREAD];
