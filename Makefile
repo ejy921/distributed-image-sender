@@ -1,13 +1,16 @@
 CC := clang
-CFLAGS := -g -Wall -Werror -Wno-unused-function -Wno-unused-variable
-
-all: p2pchat
+CFLAGS := -g -Wall -Wno-unused-function -Wno-unused-variable `pkg-config MagickWand --cflags` -fno-openmp
+LDFLAGS:= -lm `pkg-config MagickWand --libs`
+all: p2pchat magick-demo
 
 clean:
 	rm -f p2pchat
 
 p2pchat: p2pchat.c ui.c ui.h message.c message.h chathelper.c chathelper.h encryption.c encryption.h bruteforce.c bruteforce.h
 	$(CC) $(CFLAGS) -o p2pchat p2pchat.c ui.c message.c chathelper.c encryption.c bruteforce.c -lform -lncurses -lpthread
+
+magick-demo: magick-demo.c image.c image.h
+	$(CC) $(CFLAGS) -o magick-demo magick-demo.c image.c $(LDFLAGS)
 
 bruteforce: bruteforce.c bruteforce.h encryption.c encryption.h
 	$(CC) $(CFLAGS) -o bruteforce bruteforce.c encryption.c -lpthread
