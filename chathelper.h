@@ -6,6 +6,8 @@
 
 #include "bruteforce.h"
 
+#pragma once
+
 typedef struct {
     char* name; //userid of DM participant
     uint32_t key; // secret key (use hex_string_to_uint32() to cast)
@@ -15,6 +17,7 @@ typedef struct{
     char* host;
     unsigned short port;
 } destination_t;
+
 
 
 typedef struct {

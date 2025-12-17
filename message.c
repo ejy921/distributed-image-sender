@@ -8,17 +8,9 @@
 #include <unistd.h>
 #include <stdbool.h>
 
-typedef struct {
-  char* content; // encrypted image content
-  size_t len; 
-  char* receivername;
-  char* sendername;
-  bool encrypted;
-} message_t;
-
 
 // Send a across a socket with a header that includes the message length.
-int send_message(int fd, char *message)
+int send_message(int fd, char* message)
 {
   // If the message is NULL, set errno to EINVAL and return an error
   if (message == NULL)
@@ -96,4 +88,54 @@ char *receive_message(int fd)
   result[len] = '\0';
 
   return result;
+}
+
+
+char* serialize_msg(chat_message_t* msg, size_t* outlen) {
+  size_t header_len = 1 + strlen(msg->sendername) + 1 + (msg->receivername ? strlen(msg->receivername) : 1) + 1 + 20 + 1;
+
+  *outlen = header_len + msg->len;
+  char* buffer = malloc(*outlen);
+  if (!buffer) return NULL;
+
+  int offset = snprintf(
+    buffer,
+    header_len,
+    "%d\n%s\n%s\n%zu\n",
+    msg->encrypted,
+    msg->sendername,
+    msg->receivername ? msg->receivername: "*",
+    msg->len
+  );
+
+  memcpy(buffer + offset, msg->content, msg->len);
+  return buffer;
+}
+
+chat_message_t deserialize_msg(char* buffer) {
+  chat_message_t msg;
+  char receiver_buf[256];
+
+  sscanf(
+    buffer, 
+    "%d\n%s\n%s\n%zu\n",
+    (int*)&msg.encrypted,
+    msg.sendername,
+    receiver_buf,
+    &msg.len 
+  );
+
+  msg.receivername = strcmp(receiver_buf, "*") == 0 ? NULL : strdup(receiver_buf);
+  char* body = strstr(buffer, "\n") + 1;
+  body = strstr(body, "\n") + 1;
+  body = strstr(body, "\n") + 1;
+  body = strstr(body, "\n") + 1;
+
+  msg.content = malloc(msg.len);
+  if (!msg.content) {
+    return msg;
+  }
+  memcpy(msg.content, body, msg.len);
+
+  return msg;
 }
