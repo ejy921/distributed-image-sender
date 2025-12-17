@@ -24,7 +24,7 @@ static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
  * Line 3: L:\d+
  * Line 4: contents: [0-9a-z{]+
  */
- static bool is_valid_encoding(char *data) {
+static bool is_valid_encoding(char *data) {
   // split by new line
   // use regex to check if the data is valid
   char *line = strtok(data, "\n");
@@ -67,7 +67,8 @@ static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
   regfree(&regex);
 
   // Line 4: <contents>
-  // check if the contents is valid. Regex library seems to work for only <2^15 characters.
+  // check if the contents is valid. Regex library seems to work for only <2^15
+  // characters.
   line = strtok(NULL, "\n");
   if (line == NULL) {
     return false;
