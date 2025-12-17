@@ -58,7 +58,7 @@ void add_peer(int peer_socket, char* peer_username) {
 
 // Remove and free a peer by closing socket and freeing the username when a connection
 // dies or a user quits
-void remove_peer(int peer_socket) {
+void remove_peer (int peer_socket) {
   pthread_mutex_lock(&lock);
 
   peer_list_t* prev = NULL;
@@ -85,30 +85,13 @@ void remove_peer(int peer_socket) {
 
 
 // This function is run whenever the user hits enter after typing a message
-void input_callback(const char* input) {
+void input_callback(char* message) {
   // exit if user types :quit or :q
-  if (strcmp(input, ":quit") == 0 || strcmp(input, ":q") == 0) {
+  if (strcmp(message, ":quit") == 0 || strcmp(message, ":q") == 0) {
     ui_exit();
     return;
   } 
-  // ui_display(username, input);
-
-  chat_message_t message;
-
-  if (dm_user != NULL) {
-    message = create_message_direct((char*) input, strlen(input), (char*)username, *dm_user);
-  } else {
-    message = create_message_everyone((char*) input, strlen(input), (char*) username);
-  }
-
-  ui_display(username, message.content);
-
-  size_t wirelen;
-  char* serialized = serialize_msg(&message, &wirelen);
-  if (!serialized) {
-    perror("Failed to serialize message");
-    return;
-  }
+  ui_display(username, message);
 
   pthread_mutex_lock(&lock);
   // send message to peer
@@ -117,7 +100,7 @@ void input_callback(const char* input) {
       ui_display("ERR", "file descriptor bad?");
       continue;
     }
-    if (send_message(curr->socket_fd, serialized) == -1) {
+    if (send_message(curr->socket_fd, message) == -1) {
       perror("could not send message to peer");
     }
   }
@@ -129,31 +112,26 @@ void input_callback(const char* input) {
 // forward message to all peers except sender
 void forward_message(int sender_socket, chat_message_t *message) {
   pthread_mutex_lock(&lock);
-
-  size_t wirelen;
-  char* wire = serialize_msg(message, &wirelen);
-  if (!wire) {
-    pthread_mutex_unlock(&lock);
-    return;
-  }
-
   // traverse through list to send to all peers
   for (peer_list_t* curr = list; curr != NULL; curr = curr->next) {
-    // if there is no specific user to dm
+    // if there is no user to dm
     if (message->receivername == NULL) {
       if (curr->socket_fd != sender_socket) {
-        if (send_message(curr->socket_fd, wire) == -1) {
+        if (send_message(curr->socket_fd, (char*) message) == -1) {
           perror("couldn't forward message to peer");
         }
       }
-      // if there is a specific user to dm
+    // if there is a user to dm
     } else if (strcmp(curr->username, message->receivername) == 0) {
-      send_message(curr->socket_fd, wire);
+      send_message(curr->socket_fd, (char*) message);
     }
   }
 
   // free message fields
-  free(wire);
+  free(message->content);
+  free(message->sendername);
+  free(message->receivername);
+  free(message->len);
 
   pthread_mutex_unlock(&lock);
 }
@@ -175,7 +153,7 @@ char* get_username(int peer_socket) {
   return NULL;
 }
 
-// this is a 1-on-1 connection with a peer, receives messages
+// this is a 1-on-1 connection with a peer
 void *connection_thread(void *peer_socket_fd)
 {
   int peer_socket = (int) (long) peer_socket_fd;
@@ -206,7 +184,7 @@ void *connection_thread(void *peer_socket_fd)
 
   // main receive loop
   while (true) {
-    char* message = receive_message(peer_socket);
+    chat_message_t *message = receive_message(peer_socket);
     // if message is NULL, take it as peer has disconnected
     if (message == NULL)
     {
@@ -214,12 +192,15 @@ void *connection_thread(void *peer_socket_fd)
       break;
     }
 
-    // if (message == true) {
-    //   decrypt_message(message, dm_user->key);
-    // } 
+    if (message->encrypted = true) {
+      decrypt_message(message, dm_user->key);
+    } else {
+      bruteforce_message(message, dm_user->key);
+    }
 
     // display message
-    // ui_display(peer_username, message);
+    ui_display(peer_username, message);
+    
 
     if (strcmp(message, ":quit\n") == 0) {
       free(message);
@@ -227,20 +208,8 @@ void *connection_thread(void *peer_socket_fd)
       break;
     }
 
-    chat_message_t forward_msg;
-    if (dm_user != NULL) {
-      forward_msg = create_message_direct(message, strlen(message), (char*) username, *dm_user);
-    } else {
-      forward_msg = create_message_everyone(message, strlen(message), (char*) username);
-    }
-
-    ui_display(peer_username, forward_msg.content);
-
     // forward message to peers
-    forward_message(peer_socket, &forward_msg);
-
-    // free message 
-    free(message);
+    forward_message(peer_socket, message);
 
   }
   // clean up peer (remove from list)
