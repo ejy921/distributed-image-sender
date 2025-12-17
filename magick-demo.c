@@ -175,6 +175,11 @@ void convert_image(char* input_image, char* output_image, compressed_file_t * fi
   free(chpixels);
 }
 
+/**
+ * Given a compressed file struct and a location to output the image, it will translate the text back into an image and save it to the device
+ * @param file an initialized compressed_file_t struct
+ * @param output_image the file name where the new image should be saved
+ */
 void getImageFromFile(compressed_file_t * file, char* output_image) {
   #define ThrowWandException(wand) \
 { \
@@ -218,12 +223,15 @@ void getImageFromFile(compressed_file_t * file, char* output_image) {
   /*
     Create a blank image
   */
-  int file_pos = 0;
-  char curr;
+  int file_pos = 0; // Keeps track of the next character to parse
+  char curr; // saving the character for use in the loop
   MagickWandGenesis();
   image_wand=NewMagickWand();
+  // Source for creating a blank image: https://imagemagick.org/api/magick-image.php 
+  // create a new PixelWand for the background color and set it to white
   PixelWand * background_color = NewPixelWand();
   PixelSetColor(background_color, "white");
+  // create a new white image of width w and height h, with dimensions sourced from the struct
   status=MagickNewImage(image_wand, (size_t)file->w, (size_t)file->h, background_color);
   if (status == MagickFalse) {
     ThrowWandException(image_wand);
@@ -237,23 +245,33 @@ void getImageFromFile(compressed_file_t * file, char* output_image) {
     if (pixels == (PixelWand **) NULL) {
       break;
     }
-    x = 0;
+    x = 0; // reset x
+    // we can take care of multiple 'x' per loop, so a while loop instead of a for loop
     while (x < (long) width) {
+      // get first character of the row
       curr = file->contents[file_pos];
       file_pos++;
+      // second character is how many times the color corresponding to that character should appear
       char count_char = file->contents[file_pos];
+      // convert back to integer
       int count = count_char - '0';
       file_pos++;
+      // get to correct color for this character
       color_t new_color = ch_to_color((int)curr);
+      // set pixels 'count' number of times
       for (int i = 0; i < count; i++) {
         PixelGetMagickColor(pixels[x + i],&pixel);
+        // translate colors to the ImageMagick scale
         pixel.red = new_color.r * 256;
         pixel.green = new_color.g * 256;
         pixel.blue = new_color.b * 256;
+        // set the correct pixel
         PixelSetMagickColor(pixels[x + i],&pixel);
       }
+      // make sure x is updated
       x += count;
     }
+    // sync changes
     (void) PixelSyncIterator(iterator);
   }
   if (y < (long) MagickGetImageHeight(image_wand))
