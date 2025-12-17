@@ -45,3 +45,18 @@ void compressed_file_to_file (compressed_file_t *cf, char* filename);
  * @returns color at that index
  */
 color_t get_color(int i);
+
+/**
+ * Convert input_image into an image with our limited color palette and save it to the computer, and also save the encoded text to a text file and a compressed_file_t struct
+ * @param input_image filename for the untranslated image
+ * @param output_image filename that this function should write to, to output the translated image
+ * @param file_ptr struct to save information that will also be saved in an actual txt file
+ */
+void convert_image(char* input_image, char* output_image, compressed_file_t * file_ptr);
+
+/**
+ * Given a compressed file struct and a location to output the image, it will translate the text back into an image and save it to the device
+ * @param file an initialized compressed_file_t struct
+ * @param output_image the file name where the new image should be saved
+ */
+void getImageFromFile(compressed_file_t * file, char* output_image);
