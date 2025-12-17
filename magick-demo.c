@@ -5,7 +5,14 @@
 #include <wand/MagickWand.h>
 #include "image.h"
 
+/* Adapted from example at https://bricomoral.com/ImageMagick-6.8.9-7/www/magick-wand.html */
 
+/**
+ * Convert input_image into an image with our limited color palette and save it to the computer, and also save the encoded text to a text file and a compressed_file_t struct
+ * @param input_image filename for the untranslated image
+ * @param output_image filename that this function should write to, to output the translated image
+ * @param file_ptr struct to save information that will also be saved in an actual txt file
+ */
 void convert_image(char* input_image, char* output_image, compressed_file_t * file_ptr) {
   #define ThrowWandException(wand) \
 { \
@@ -57,104 +64,114 @@ void convert_image(char* input_image, char* output_image, compressed_file_t * fi
   status=MagickReadImage(image_wand,input_image);
   if (status == MagickFalse)
     ThrowWandException(image_wand);
-  //contrast_wand=CloneMagickWand(image_wand);
+
+  // My own separate variables for height and width that are ints instead 
   int h = MagickGetImageHeight(image_wand);
   int w = MagickGetImageWidth(image_wand);
-  char * chpixels = malloc(h * w * 2 + 1); // worst case size of character array (if every adjacent pixel is a different color)
+  // worst case size of character array (if every adjacent pixel is a different color) 
+  // would be two characters for each pixel plus the string terminator
+  char * chpixels = malloc(h * w * 2 + 1); 
   char curr = 126; // starts at an unused character
-  int curr_count = 0;
-  int curr_pos = 0;
+  int curr_count = 0; // how many times in a row current character has been seen
+  int curr_pos = 0; // position in chpixels string
 
   iterator=NewPixelIterator(image_wand);
-  //contrast_iterator=NewPixelIterator(contrast_wand);
-  // if ((iterator == (PixelIterator *) NULL) ||
-  //     (contrast_iterator == (PixelIterator *) NULL))
   if (iterator == (PixelIterator *) NULL)
     ThrowWandException(image_wand);
-  for (y=0; y < (long) MagickGetImageHeight(image_wand); y++)
+  for (y=0; y < (long) MagickGetImageHeight(image_wand); y++) // y is also height
   {
-    curr = 126;
-    curr_count = 0;
+    curr = 126; // reset for each row 
+    curr_count = 0; //reset for each row
+    // get a row of pixels
     pixels=PixelGetNextIteratorRow(iterator,&width);
-    // contrast_pixels=PixelGetNextIteratorRow(contrast_iterator,&width);
     if (pixels == (PixelWand **) NULL)
       break;
     for (x=0; x < (long) width; x++)
     {
       PixelGetMagickColor(pixels[x],&pixel);
-      //printf("%f, %f, %f\n", pixel.red, pixel.green, pixel.blue);
+      // Our colors are smaller number than the ImageMagick colors, so divide by 256 first
+      // Then convert to the closest of our colors
       color_t color = {pixel.red / 256, pixel.green / 256, pixel.blue / 256};
       int i = color_distance(color);
       color_t new_color = get_color(i);
+      // Get the character representation of the translated color
       char new_char = (char) color_to_ch(new_color);
+      // Previous pixel was also this color
       if (new_char == curr) {
+        // Increase how many times we've seen this color
         curr_count++;
-        if (x == w-1) {
+        if (x == w-1) { // if this is the last pixel in the row, we need to write the information to the file immediately 
+          // If the count is more than nine, it needs to be reset
           if (curr_count > 9) {
-            chpixels[curr_pos] = (char)(9 + '0');
+            // set the next character to the character representation of 9
+            chpixels[curr_pos] = '9';
             curr_pos++;
-            chpixels[curr_pos] = curr;
+            chpixels[curr_pos] = curr; // start a new record of this character
             curr_pos++;
-            chpixels[curr_pos] = (char)(1 + '0');
+            chpixels[curr_pos] = '1'; // record a 1 for this character, this is the end of the row so we know it is 1
             curr_pos++;
           } else {
-            chpixels[curr_pos] = (char)(curr_count + '0');
+            chpixels[curr_pos] = (char)(curr_count + '0'); // record curent count before it is reset on the next row
             curr_pos++;
           }
-        } else {
+        } else { // not the end of the row
+          // If the count is more than nine, it needs to be reset
           if (curr_count > 9) {
-            chpixels[curr_pos] = (char)(9 + '0');
+            chpixels[curr_pos] = '9';
             curr_pos++;
-            chpixels[curr_pos] = curr;
+            chpixels[curr_pos] = curr; // start a new record for this character
             curr_pos++;
-            curr_count = 1;
+            curr_count = 1; // we just started a new record, so we've seen this character once
           }
         }
-      } else {
-        if (curr_count > 0) {
-          chpixels[curr_pos] = (char)(curr_count + '0');
+      } else { // this pixel is a different color than the previous pixel
+        if (curr_count > 0) { // don't record previous count if the count is still zero, but otherwise we need it
+          chpixels[curr_pos] = (char)(curr_count + '0'); // record previous count for the previous character
           curr_pos++;
         }
-        curr = new_char;
-        chpixels[curr_pos] = curr;
+        curr = new_char; 
+        chpixels[curr_pos] = curr; // record new character
         curr_pos++;  
-        curr_count = 1;
-        if (x == w-1) {
-          chpixels[curr_pos] = (char)(curr_count + '0');
+        curr_count = 1; // we've seen this character once
+        if (x == w-1) { // if it's the last pixel of the row we must save the count immediately
+          chpixels[curr_pos] = '1';
           curr_pos++;
         }
       }
+      // Convert color values back to the ImageMagick range
       pixel.red= new_color.r * 256;
       pixel.green= new_color.g * 256;
       pixel.blue= new_color.b * 256;
-      //pixel.index=SigmoidalContrast(pixel.index);
       PixelSetMagickColor(pixels[x],&pixel);
     }
+    // Sync changes
     (void) PixelSyncIterator(iterator);
   }
   if (y < (long) MagickGetImageHeight(image_wand))
     ThrowWandException(image_wand);
-  //contrast_iterator=DestroyPixelIterator(contrast_iterator);
   iterator=DestroyPixelIterator(iterator);
-  //image_wand=DestroyMagickWand(image_wand);
   /*
     Write the image then destroy it.
   */
   status=MagickWriteImages(image_wand,output_image,MagickTrue);
   if (status == MagickFalse)
     ThrowWandException(image_wand);
-  // contrast_wand=DestroyMagickWand(contrast_wand);
   image_wand=DestroyMagickWand(image_wand);
   MagickWandTerminus();
+  // set end of the string to the string terminator
   chpixels[curr_pos] = '\0';
+  // get length of the contents (different for each file and isn't connected to image resolution)
   int contents_length = strlen(chpixels);
+  // set the struct fields
   file_ptr->w = w;
   file_ptr->h = h;
   file_ptr->contents_length = contents_length;
+  // malloc space for this string and copy the local string into it
   file_ptr->contents=malloc(contents_length);
   strcpy(file_ptr->contents, chpixels);
-  //printf("%s\n", chpixels);
+  // save to a txt file (just to see)
   compressed_file_to_file(file_ptr, "testoutput.txt");
+  // free local version of the string (it's most likely larger than the version we copied)
   free(chpixels);
 }
 
