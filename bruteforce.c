@@ -31,27 +31,37 @@ static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
   regex_t regex;
 
   // Line 1: W: <width>
-  printf("Line 1: %s\n", line);
+  if (line == NULL) {
+    return false;
+  }
   regcomp(&regex, "^W:[0-9]+$", REG_EXTENDED);
   if (regexec(&regex, line, 0, NULL, 0) != 0) {
     printf("Invalid encoding: %s\n", line);
+    regfree(&regex);
     return false;
   }
+  regfree(&regex);
 
   // Line 2: H: <height>
   line = strtok(NULL, "\n");
-  printf("Line 2: %s\n", line);
-  regcomp(&regex, "^H:[0-9]+$", REG_EXTENDED);
-  if (regexec(&regex, line, 0, NULL, 0) != 0) {
-    printf("Invalid encoding: %s\n", line);
+  if (line == NULL) {
     return false;
   }
+  regcomp(&regex, "^H:[0-9]+$", REG_EXTENDED);
+  if (regexec(&regex, line, 0, NULL, 0) != 0) {
+    regfree(&regex);
+    return false;
+  }
+  regfree(&regex);
+
   // Line 3: L: <contents length>
   line = strtok(NULL, "\n");
-  printf("Line 3: %s\n", line);
+  if (line == NULL) {
+    return false;
+  }
   regcomp(&regex, "^L:[0-9]+$", REG_EXTENDED);
   if (regexec(&regex, line, 0, NULL, 0) != 0) {
-    printf("Invalid encoding: %s\n", line);
+    regfree(&regex);
     return false;
   }
   regfree(&regex);
@@ -59,10 +69,12 @@ static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
   // Line 4: <contents>
   // check if the contents is valid. Regex library seems to work for only <2^15 characters.
   line = strtok(NULL, "\n");
+  if (line == NULL) {
+    return false;
+  }
   for (size_t i = 0; line[i] != '\0'; i++) {
     char c = line[i];
     if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || c == '{')) {
-      printf("Invalid encoding: %s\n", line);
       return false;
     }
   }
