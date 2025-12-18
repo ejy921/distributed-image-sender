@@ -36,7 +36,6 @@ static bool is_valid_encoding(char *data) {
   }
   regcomp(&regex, "^W:[0-9]+$", REG_EXTENDED);
   if (regexec(&regex, line, 0, NULL, 0) != 0) {
-    printf("Invalid encoding: %s\n", line);
     regfree(&regex);
     return false;
   }
