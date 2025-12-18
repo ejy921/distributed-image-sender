@@ -183,13 +183,11 @@ void *connection_thread(void *peer_socket_fd)
       break;
     }
 
-    // null terminate message->content
-    message->content[message->len] = '\0';
-
     // check if message is encrypted
     if (!message->encrypted) {
-      // if message is not encrypted, display it
+      // if message is not encrypted, display it and forward to all peers
       ui_display(message->sendername, message->content);
+      forward_to_all(peer_socket, message);
     } else if (strcmp(message->receivername, username) != 0) { // if message is encrypted and not for me
       ui_display(message->sendername, "Encrypted message");
       forward_to_all(peer_socket, message);

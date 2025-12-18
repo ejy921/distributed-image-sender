@@ -1,4 +1,5 @@
 #include "message.h"
+#include "chathelper.h"
 
 #include <errno.h>
 #include <stdint.h>
