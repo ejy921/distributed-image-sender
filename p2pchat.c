@@ -91,7 +91,12 @@ void input_callback(const char* message) {
   ui_display(username, message);
 
   // Create chat_message_t (create_message_everyone will copy the content internally)
-  chat_message_t message_to_send = create_message_everyone((char *)message, strlen(message), username);
+  chat_message_t message_to_send;
+  if (dm_user->key != 0) {
+    message_to_send = create_message_direct((char *)message, strlen(message), username, *dm_user);
+  } else {
+    message_to_send = create_message_everyone((char *)message, strlen(message), username);
+  }
   pthread_mutex_lock(&lock);
   // send message to peer
   for (peer_list_t* curr = list; curr != NULL; curr = curr->next) {
@@ -178,10 +183,22 @@ void *connection_thread(void *peer_socket_fd)
       break;
     }
 
-    ui_display(peer_username, message->content);
+    // null terminate message->content
+    message->content[message->len] = '\0';
 
-    // forward message to other peers
-    forward_to_all(peer_socket, message);
+    // check if message is encrypted
+    if (!message->encrypted) {
+      // if message is not encrypted, display it
+      ui_display(message->sendername, message->content);
+    } else if (strcmp(message->receivername, username) != 0) { // if message is encrypted and not for me
+      ui_display(message->sendername, "Encrypted message");
+      forward_to_all(peer_socket, message);
+    } else { // if message is encrypted and for me
+      ui_display(message->sendername, message->content);
+      decrypt_message(message, dm_user->key);
+      ui_display(message->sendername, message->content);
+    }
+
     // free message after forwarding
     free(message);
   }

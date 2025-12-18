@@ -23,6 +23,7 @@ chat_message_t create_message_everyone(char *content, size_t len,
   
   // Copy content to fixed-length array
   memcpy(msg.content, content, msg.len);
+  msg.content[msg.len] = '\0';
   
   // Copy sendername to fixed-length array
   strncpy(msg.sendername, sendername, MAX_NAME_LENGTH - 1);
