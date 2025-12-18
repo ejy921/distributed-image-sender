@@ -7,6 +7,7 @@
 #include <string.h>
 
 #include "bruteforce.h"
+#include "image.h"
 
 typedef struct {
   char *name;   // userid of DM participant
@@ -72,3 +73,11 @@ void convert_chat_to_image(chat_message_t *message, char *filename);
  * @param filename The filename to show
  */
 void show_image(char *filename);
+
+/**
+ * Convert a file to a compressed_file_t struct.
+ * @param compressed_file_header The struct to fill
+ * @param filename The filename to convert
+ */
+void file_to_struct(compressed_file_t *compressed_file_header,
+  const char *filename);

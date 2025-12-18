@@ -1,7 +1,6 @@
 #include "chathelper.h"
 #include "bruteforce.h"
 #include "encryption.h"
-#include "image.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
