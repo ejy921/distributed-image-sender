@@ -11,9 +11,6 @@
 #include "socket.h"
 #include "ui.h"
 
-// change parameters to forward_to_all
-// 
-
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
 typedef struct peer_node {
@@ -58,7 +55,7 @@ void add_peer(int peer_socket, char* peer_username) {
 
 // Remove and free a peer by closing socket and freeing the username when a connection
 // dies or a user quits
-void remove_peer(int peer_socket) {
+void remove_peer (int peer_socket) {
   pthread_mutex_lock(&lock);
 
   peer_list_t* prev = NULL;
@@ -85,24 +82,16 @@ void remove_peer(int peer_socket) {
 
 
 // This function is run whenever the user hits enter after typing a message
-void input_callback(const char* input) {
+void input_callback(const char* message) {
   // exit if user types :quit or :q
-  if (strcmp(input, ":quit") == 0 || strcmp(input, ":q") == 0) {
+  if (strcmp(message, ":quit") == 0 || strcmp(message, ":q") == 0) {
     ui_exit();
     return;
   } 
-  // ui_display(username, input);
+  ui_display(username, message);
 
-  chat_message_t message;
-
-  if (dm_user != NULL) {
-    message = create_message_direct((char*) input, strlen(input), (char*)username, *dm_user);
-  } else {
-    message = create_message_everyone((char*) input, strlen(input), (char*) username);
-  }
-
-  ui_display(username, message.content);
-
+  // Create chat_message_t (create_message_everyone will copy the content internally)
+  chat_message_t message_to_send = create_message_everyone((char *)message, strlen(message), username);
   pthread_mutex_lock(&lock);
   // send message to peer
   for (peer_list_t* curr = list; curr != NULL; curr = curr->next) {
@@ -110,7 +99,7 @@ void input_callback(const char* input) {
       ui_display("ERR", "file descriptor bad?");
       continue;
     }
-    if (send_chat_message(curr->socket_fd, &message) == -1) {
+    if (send_chat_message(curr->socket_fd, &message_to_send) == -1) {
       perror("could not send message to peer");
     }
   }
@@ -122,7 +111,6 @@ void input_callback(const char* input) {
 // forward message to all peers except sender
 void forward_to_all(int sender_socket, chat_message_t *message) {
   pthread_mutex_lock(&lock);
-
   // traverse through list to send to all peers
   for (peer_list_t* curr = list; curr != NULL; curr = curr->next) {
     if (curr->socket_fd != sender_socket) {
@@ -131,7 +119,6 @@ void forward_to_all(int sender_socket, chat_message_t *message) {
       }
     }
   }
-
   pthread_mutex_unlock(&lock);
 }
 
@@ -152,7 +139,7 @@ char* get_username(int peer_socket) {
   return NULL;
 }
 
-// this is a 1-on-1 connection with a peer, receives messages
+// this is a 1-on-1 connection with a peer
 void *connection_thread(void *peer_socket_fd)
 {
   int peer_socket = (int) (long) peer_socket_fd;
@@ -197,7 +184,6 @@ void *connection_thread(void *peer_socket_fd)
     forward_to_all(peer_socket, message);
     // free message after forwarding
     free(message);
-
   }
   // clean up peer (remove from list)
   remove_peer(peer_socket);
@@ -231,7 +217,6 @@ void* listener_thread(void* input)
       close(peer_client_socket);
       continue;
     }
-
     send_message(peer_client_socket, (char *)username);
 
     // add the connection to peer list
@@ -305,7 +290,6 @@ int main(int argc, char** argv) {
       perror("Failed to connect");
     } else {
       // let peer know we exist
-
       send_message(socket_fd, (char*) username);
       char *peer_username = receive_message(socket_fd);
       if (peer_username == NULL) {

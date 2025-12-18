@@ -10,7 +10,7 @@
 
 
 // Send a across a socket with a header that includes the message length.
-int send_message(int fd, char* message)
+int send_message(int fd, char *message)
 {
   // If the message is NULL, set errno to EINVAL and return an error
   if (message == NULL)
