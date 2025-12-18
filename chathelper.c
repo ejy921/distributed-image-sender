@@ -18,11 +18,17 @@
  */
 chat_message_t create_message_everyone(char *content, size_t len,
                                        char *sendername) {
-  chat_message_t msg = {.content = content,
-                        .encrypted = false,
-                        .len = len,
-                        .receivername = NULL,
-                        .sendername = sendername};
+  chat_message_t msg = {0};
+  msg.encrypted = false;
+  msg.len = len;
+  
+  // Copy content to fixed-length array
+  memcpy(msg.content, content, msg.len);
+  
+  // Copy sendername to fixed-length array
+  strncpy(msg.sendername, sendername, MAX_NAME_LENGTH - 1);
+  msg.sendername[MAX_NAME_LENGTH - 1] = '\0';
+  
   return msg;
 }
 
@@ -37,12 +43,23 @@ chat_message_t create_message_everyone(char *content, size_t len,
  */
 chat_message_t create_message_direct(char *content, size_t len,
                                      char *sendername, user_t dm_user) {
-
-  chat_message_t msg = {.content = encrypt(content, len, dm_user.key),
-                        .encrypted = true,
-                        .len = len,
-                        .receivername = dm_user.name,
-                        .sendername = sendername};
+  chat_message_t msg = {0};
+  msg.encrypted = true;
+  msg.len = len;
+  
+  // Copy content to fixed-length array before encryption
+  memcpy(msg.content, content, msg.len);
+  // Encrypt in place
+  encrypt(msg.content, msg.len, dm_user.key);
+  
+  // Copy sendername to fixed-length array
+  strncpy(msg.sendername, sendername, MAX_NAME_LENGTH - 1);
+  msg.sendername[MAX_NAME_LENGTH - 1] = '\0';
+  
+  // Copy receivername to fixed-length array
+  strncpy(msg.receivername, dm_user.name, MAX_NAME_LENGTH - 1);
+  msg.receivername[MAX_NAME_LENGTH - 1] = '\0';
+  
   return msg;
 }
 

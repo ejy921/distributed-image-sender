@@ -1,3 +1,5 @@
+#pragma once
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -16,12 +18,15 @@ typedef struct {
   unsigned short port;
 } destination_t;
 
+#define MAX_CONTENT_LENGTH 65536
+#define MAX_NAME_LENGTH 64
+
 typedef struct {
-  char *content;      // Image content, encrypted or not
-  size_t len;         // Length of content as array
-  char *receivername; // userid of destination
-  char *sendername;   // username of sender
-  bool encrypted;     // true if message is encrypted, false if not
+  char content[MAX_CONTENT_LENGTH];      // Image content, encrypted or not (fixed length)
+  size_t len;                            // Length of content actually used
+  char receivername[MAX_NAME_LENGTH];    // userid of destination (fixed length)
+  char sendername[MAX_NAME_LENGTH];      // username of sender (fixed length)
+  bool encrypted;                        // true if message is encrypted, false if not
 } chat_message_t;
 
 // Non-encrypted message

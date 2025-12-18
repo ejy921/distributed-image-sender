@@ -97,3 +97,47 @@ char *receive_message(int fd)
 
   return result;
 }
+
+// Send a chat_message_t structure across a socket
+int send_chat_message(int fd, chat_message_t *message)
+{
+
+  // Send the entire structure
+  size_t total_size = sizeof(chat_message_t);
+  size_t bytes_written = 0;
+  while (bytes_written < total_size)
+  {
+    ssize_t rc = write(fd, (char *)message + bytes_written, total_size - bytes_written);
+    if (rc <= 0)
+      return -1;
+    bytes_written += rc;
+  }
+
+  return 0;
+}
+
+// Receive a chat_message_t structure from a socket
+// Since chat_message_t is now fixed-length, we can read it directly
+chat_message_t *receive_chat_message(int fd)
+{
+  chat_message_t *result = malloc(sizeof(chat_message_t));
+  if (result == NULL)
+  {
+    return NULL;
+  }
+
+  // Read the entire structure
+  size_t total_size = sizeof(chat_message_t);
+  size_t bytes_read = 0;
+  while (bytes_read < total_size)
+  {
+    ssize_t rc = read(fd, (char *)result + bytes_read, total_size - bytes_read);
+    if (rc <= 0)
+    {
+      free(result);
+      return NULL;
+    }
+    bytes_read += rc;
+  }
+  return result;
+}
