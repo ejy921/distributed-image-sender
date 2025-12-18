@@ -8,17 +8,9 @@
 #include <unistd.h>
 #include <stdbool.h>
 
-typedef struct {
-  char* content; // encrypted image content
-  size_t len; 
-  char* receivername;
-  char* sendername;
-  bool encrypted;
-} message_t;
-
 
 // Send a across a socket with a header that includes the message length.
-int send_message(int fd, char *message)
+int send_message(int fd, char* message)
 {
   // If the message is NULL, set errno to EINVAL and return an error
   if (message == NULL)
