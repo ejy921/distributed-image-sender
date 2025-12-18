@@ -109,6 +109,7 @@ user_t create_dm_user(char *name, char *key) {
 void parse_args(int argc, char **argv, destination_t *dest, user_t *user) {
   // set default
   dest->host = "localhost";
+  user->key = 0; // initialize
 
   for (int i = 2; i < argc; i++) {
     if (strcmp(argv[i], "-h") == 0) { // if -h is given, set host
