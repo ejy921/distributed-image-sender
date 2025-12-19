@@ -176,6 +176,10 @@ void convert_chat_to_image(chat_message_t *message, char *filename) {
   fclose(file);
   // convert txt file to compressed struct
   compressed_file_t *compressed_file = malloc(sizeof(compressed_file_t));
+
+  char contents_length_str[32];
+  snprintf(contents_length_str, sizeof(contents_length_str), "%d", compressed_file->contents_length);
+  ui_display("Contents length", contents_length_str);
   file_to_struct(compressed_file, "receiving_tmp.txt");
   // convert compressed struct to image & save image
   getImageFromFile(compressed_file, filename);
