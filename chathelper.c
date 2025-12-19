@@ -135,10 +135,27 @@ void parse_args(int argc, char **argv, destination_t *dest, user_t *user, bool *
   }
 }
 
+/**
+ * Remove trailing newline characters from a string
+ * @param str The string to modify (NULL-safe)
+ */
+static void remove_newline(char *str) {
+  if (str == NULL) return;
+  size_t len = strlen(str);
+  if (len > 0 && str[len - 1] == '\n') {
+    str[len - 1] = '\0';
+    len--;
+  }
+  if (len > 0 && str[len - 1] == '\r') {
+    str[len - 1] = '\0';
+  }
+}
+
 void file_to_struct(compressed_file_t *compressed_file_header,
                     const char *filename) {
-  FILE *file = fopen(filename, "rb");
+  FILE *file = fopen(filename, "r");
   if (!file) {
+    fprintf(stderr, "Error: Failed to open file %s\n", filename);
     return;
   }
 
@@ -147,18 +164,59 @@ void file_to_struct(compressed_file_t *compressed_file_header,
   size_t len = 0;
 
   // line 1: width
-  getline(&line, &len, file);
+  if (getline(&line, &len, file) == -1) {
+    fprintf(stderr, "Error: Failed to read line 1 (width)\n");
+    free(line);
+    fclose(file);
+    return;
+  }
+  remove_newline(line);
+  printf("DEBUG: Line 1: [%s]\n", line);
   char *ptr = strchr(line, ':');
+  if (ptr == NULL) {
+    fprintf(stderr, "Error: Colon not found in line 1: [%s]\n", line);
+    free(line);
+    fclose(file);
+    return;
+  }
   compressed_file_header->w = atoi(ptr + 1);
   printf("Width: %d\n", compressed_file_header->w);
+  
   // line 2: height
-  getline(&line, &len, file);
+  if (getline(&line, &len, file) == -1) {
+    fprintf(stderr, "Error: Failed to read line 2 (height)\n");
+    free(line);
+    fclose(file);
+    return;
+  }
+  remove_newline(line);
+  printf("DEBUG: Line 2: [%s]\n", line);
   ptr = strchr(line, ':');
+  if (ptr == NULL) {
+    fprintf(stderr, "Error: Colon not found in line 2: [%s]\n", line);
+    free(line);
+    fclose(file);
+    return;
+  }
   compressed_file_header->h = atoi(ptr + 1);
   printf("Height: %d\n", compressed_file_header->h);
+  
   // line 3: contents length
-  getline(&line, &len, file);
+  if (getline(&line, &len, file) == -1) {
+    fprintf(stderr, "Error: Failed to read line 3 (contents length)\n");
+    free(line);
+    fclose(file);
+    return;
+  }
+  remove_newline(line);
+  printf("DEBUG: Line 3: [%s]\n", line);
   ptr = strchr(line, ':');
+  if (ptr == NULL) {
+    fprintf(stderr, "Error: Colon not found in line 3: [%s]\n", line);
+    free(line);
+    fclose(file);
+    return;
+  }
   compressed_file_header->contents_length = atoi(ptr + 1);
   printf("Contents length: %d\n", compressed_file_header->contents_length);
   // line 4: contents
