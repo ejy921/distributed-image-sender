@@ -1,6 +1,0 @@
-socket(AF_INET, SOCK_STREAM, IPPROTO_IP) = 3
-bind(3, {sa_family=AF_INET, sin_port=htons(0), sin_addr=inet_addr("0.0.0.0")}, 16) = 0
-getsockname(3, {sa_family=AF_INET, sin_port=htons(56265), sin_addr=inet_addr("0.0.0.0")}, [16]) = 0
-listen(3, 1)                            = 0
---- SIGINT {si_signo=SIGINT, si_code=SI_KERNEL} ---
-+++ exited with 1 +++
