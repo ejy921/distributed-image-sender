@@ -161,7 +161,7 @@ void file_to_struct(compressed_file_t *compressed_file_header,
   compressed_file_header->contents_length = atoi(ptr + 1);
   // line 4: contents
   getline(&line, &len, file);
-  compressed_file_header->contents = malloc(strlen(line));
+  compressed_file_header->contents = malloc(compressed_file_header->contents_length);
   memcpy(compressed_file_header->contents, line, strlen(line));
 
   free(line);
@@ -177,7 +177,6 @@ void convert_chat_to_image(chat_message_t *message, char *filename) {
   // convert txt file to compressed struct
   compressed_file_t *compressed_file = malloc(sizeof(compressed_file_t));
   file_to_struct(compressed_file, "receiving_tmp.txt");
-  ui_display("INFO", compressed_file->contents);
   // convert compressed struct to image & save image
   getImageFromFile(compressed_file, filename);
 
