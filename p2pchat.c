@@ -185,6 +185,11 @@ void *connection_thread(void *peer_socket_fd)
       break;
     }
 
+    // save text file
+    // load text file
+    // convert text file to image (+ save)
+    // display jpg file
+
     // check if message is encrypted
     if (!message->encrypted) {
       // if message is not encrypted, display it and forward to all peers
