@@ -328,11 +328,6 @@ void* listener_thread(void* input)
 }
 
 int main(int argc, char** argv) {
-  // Make sure the arguments include a username
-  if (argc % 2 != 0) {
-    fprintf(stderr, "Usage: %s <username> \nOptions: \n-h <peer> \t: Peer destination (Default localhost)\n-p <port> \t: Peer port number \n-u <username> \t: Username of DM pair \n-k <key>\t: Encryption key shared with DM pair, hexchar[8]\n", argv[0]);
-    exit(1);
-  }
 
   // allocate memory to parse command line argument
   destination_t *dest = malloc(sizeof(destination_t));
