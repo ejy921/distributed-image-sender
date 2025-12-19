@@ -118,7 +118,13 @@ void input_callback(const char* message) {
   // convert message to image file
   char* output_image = image_name;
   compressed_file_t* fileptr = NULL;
+  ui_display("INFO", "Converting image to text file");
+  ui_display("Input image: ", full_image_path);
+  ui_display("Output text file: ", output_image);
+
   convert_image(full_image_path, output_image, fileptr);
+
+  ui_display("INFO", "Converted image to text file");
 
   // Create chat_message_t (create_message_everyone will copy the content internally)
   chat_message_t message_to_send;
