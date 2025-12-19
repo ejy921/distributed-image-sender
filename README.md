@@ -93,3 +93,7 @@ If `--mitm` option is not specified, nothing is done but message is just transfe
 -> User1: Encrypted Message from User1. Decrypting...
 -> Received a file and saved as `Clientname-received.txt`.
 ```
+
+## Misc
+
+Link to slide: <https://docs.google.com/presentation/d/1tpcxsIkLRtcWJ8ZN3WcKEy2KYXnlO6ghJoRjPCefoZI/edit?usp=sharing>
