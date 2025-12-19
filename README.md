@@ -73,7 +73,7 @@ colorwheel.jpg
 
 Note that it may take few seconds to encode image into text format.
 
-Tested with colowheel.jpg. Other file may not work, when the size is too big.
+Tested with colorwheel.jpg. Other files may not work if their sizes are too big.
 
 ### User 2 Expected Output
 
