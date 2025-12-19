@@ -224,11 +224,11 @@ void convert_chat_to_image(chat_message_t *message, char *filename) {
   char width_str[32];
   char height_str[32];
   char contents_length_str[32];
-  snprintf(contents_length_str, sizeof(contents_length_str), "Width: %d\n", compressed_file->w);
-  snprintf(contents_length_str, sizeof(contents_length_str), "Height: %d\n", compressed_file->h);
+  snprintf(width_str, sizeof(width_str), "Width: %d\n", compressed_file->w);
+  snprintf(height_str, sizeof(height_str), "Height: %d\n", compressed_file->h);
   snprintf(contents_length_str, sizeof(contents_length_str), "Contents length: %d\n", compressed_file->contents_length);
-  ui_display("Width", contents_length_str);
-  ui_display("Height", contents_length_str);
+  ui_display("Width", width_str);
+  ui_display("Height", height_str);
   ui_display("Contents length", contents_length_str);
   // convert compressed struct to image & save image
   getImageFromFile(compressed_file, filename);
