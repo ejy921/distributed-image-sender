@@ -106,7 +106,7 @@ void *key_bruteforce(void *input) {
     if (key % 0x01000000 == 0) {
       char key_str[32];
       snprintf(key_str, sizeof(key_str), "0x%08x", (uint32_t)key);
-      ui_display("Bruteforcing 32-bit keys... %s\n", key_str);
+      ui_display("Searched up to", key_str);
     }
     // Check if the data is encoded properly
     if (is_valid_encoding(decrypted)) {

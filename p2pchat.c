@@ -161,6 +161,7 @@ void input_callback(const char* message) {
 
   pthread_mutex_unlock(&lock);
 
+  ui_display("INFO", "Image sent to all peers");
   // delete text file
   remove(output_image);
   remove("tmp.txt");
@@ -261,11 +262,11 @@ void *connection_thread(void *peer_socket_fd)
         if (key != 0) {
           char key_str[32];
           snprintf(key_str, sizeof(key_str), "0x%08x", key);
-          ui_display("Key found! Key: %s", key_str);
+          ui_display("Key found! Key: ", key_str);
 
           char cracked_image_name[1024];
           sprintf(cracked_image_name, "%s-cracked.txt", username);
-          ui_display("Retrieved file and saved as `%s-cracked.txt`.", cracked_image_name);
+          ui_display("Retrieved file and saved as", cracked_image_name);
           FILE *cracked_file = fopen(cracked_image_name, "w");
           fwrite(message->content, 1, message->len, cracked_file);
           fclose(cracked_file);
@@ -284,6 +285,7 @@ void *connection_thread(void *peer_socket_fd)
       // Decrypt message and display the converted image
       decrypt_message(message, dm_user->key);
       sprintf(image_jpg_name, "%s-received.jpg", username);
+      ui_display("Received file and saved as", image_jpg_name);
       convert_chat_to_image(message, image_jpg_name);
       show_image(image_jpg_name);
     }
