@@ -92,6 +92,13 @@ void input_callback(const char* message) {
   } 
   ui_display(username, message);
 
+  char image_name[1024];
+  snprintf(image_name, sizeof(image_name), "%s-sending.txt", username);
+  // convert message to image file
+  char* output_image = image_name;
+  compressed_file_t* fileptr = NULL;
+  convert_image((char*)message, output_image, fileptr);
+
   // Create chat_message_t (create_message_everyone will copy the content internally)
   chat_message_t message_to_send;
   if (dm_user->key != 0) {
