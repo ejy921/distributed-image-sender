@@ -13,6 +13,7 @@
 
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
+// linked peer list struct
 typedef struct peer_node {
   int socket_fd;
   char* username;
@@ -141,12 +142,14 @@ void input_callback(const char* message) {
   fread(content, 1, 100000, file);
   fclose(file);
 
+  // create message struct depending on whether there is a user to dm
   chat_message_t message_to_send;
   if (dm_user->key != 0) {
     message_to_send = create_message_direct((char *)content, strlen(content), username, *dm_user);
   } else {
     message_to_send = create_message_everyone((char *)content, strlen(content), username);
   }
+  
   pthread_mutex_lock(&lock);
   // send message to peer
   for (peer_list_t* curr = list; curr != NULL; curr = curr->next) {
@@ -252,8 +255,10 @@ void *connection_thread(void *peer_socket_fd)
       show_image(image_jpg_name);
       forward_to_all(peer_socket, message);
     } else if (strcmp(message->receivername, username) != 0) { // if message is encrypted and not for me
+      // display message and forward message to all peers
       ui_display(message->sendername, "Encrypted message");
       forward_to_all(peer_socket, message);
+      // if user is an attacker
       if (mitm_mode) {
         ui_display("INFO", "MITM mode enabled. Bruteforcing 32-bit keys...");
         uint32_t key = 0;
