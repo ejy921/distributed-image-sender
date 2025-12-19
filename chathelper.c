@@ -160,9 +160,9 @@ void file_to_struct(compressed_file_t *compressed_file_header,
   ptr = strchr(line, ':');
   compressed_file_header->contents_length = atoi(ptr + 1);
   // line 4: contents
-  compressed_file_header->contents = malloc(compressed_file_header->contents_length);
   getline(&line, &len, file);
-  memcpy(compressed_file_header->contents, line, compressed_file_header->contents_length);
+  compressed_file_header->contents = malloc(strlen(line));
+  memcpy(compressed_file_header->contents, line, strlen(line));
 
   free(line);
   fclose(file);
