@@ -107,11 +107,11 @@ user_t create_dm_user(char *name, char *key) {
  * @param argc Number of arguments
  * @param argv Arguments
  */
-void parse_args(int argc, char **argv, destination_t *dest, user_t *user) {
-  // set default
+void parse_args(int argc, char **argv, destination_t *dest, user_t *user, bool *mitm_mode) {
   dest->host = "localhost";
-  user->key = 0; // initialize
-
+  user->key = 0;
+  *mitm_mode = false;
+  
   for (int i = 2; i < argc; i++) {
     if (strcmp(argv[i], "-h") == 0) { // if -h is given, set host
       dest->host = argv[i + 1];
@@ -125,6 +125,8 @@ void parse_args(int argc, char **argv, destination_t *dest, user_t *user) {
     } else if (strcmp(argv[i], "-k") == 0) { // if -k is given, set user key
       user->key = hex_string_to_uint32(argv[i + 1]);
       i++;
+    } else if (strcmp(argv[i], "--mitm") == 0) { // if --mitm is given, set mitm mode
+      *mitm_mode = true;
     } else { // if unknown argument is given, print error and exit
       fprintf(stderr, "Unknown argument: %s\n", argv[i]);
       exit(1);

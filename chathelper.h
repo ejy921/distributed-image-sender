@@ -39,7 +39,7 @@ chat_message_t create_message_direct(char *content, size_t len,
                                      char *sendername, user_t dm_user);
 
 // Parse command line arguments
-void parse_args(int argc, char **argv, destination_t *dest, user_t *user);
+void parse_args(int argc, char **argv, destination_t *dest, user_t *user, bool *mitm_mode);
 
 /**
  * Decrypt the message with the key. Function will decrypt the message in place

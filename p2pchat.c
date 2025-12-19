@@ -25,6 +25,8 @@ peer_list_t* list = NULL;
 // Keep the username in a global so we can access it from the callback
 char* username;
 user_t *dm_user;
+// MITM mode: if true, the user tries to decrypt the message by bruteforcing the key
+bool mitm_mode = false;
 
 // Add peer to global peer list
 void add_peer(int peer_socket, char* peer_username) {
@@ -259,7 +261,7 @@ int main(int argc, char** argv) {
   dm_user = malloc(sizeof(user_t));
   // Save the username in a global
   username = argv[1];
-  parse_args(argc, argv, dest, dm_user);
+  parse_args(argc, argv, dest, dm_user, &mitm_mode);
 
   unsigned short port = 0;
   int server_socket_fd = server_socket_open(&port);
