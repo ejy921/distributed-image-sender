@@ -258,8 +258,12 @@ void *connection_thread(void *peer_socket_fd)
         uint32_t key = 0;
         bruteforce_message(message, &key);
         if (key != 0) {
+          char key_str[32];
+          snprintf(key_str, sizeof(key_str), "0x%08x", key);
+          ui_display("Key found! Key: %s", key_str);
+
           decrypt_message(message, key);
-          sprintf(image_jpg_name, "%s-received.jpg", username);
+          sprintf(image_jpg_name, "%s-cracked.jpg", username);
           convert_chat_to_image(message, image_jpg_name);
           show_image(image_jpg_name);
         }
