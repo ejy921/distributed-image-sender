@@ -173,9 +173,9 @@ void convert_chat_to_image(chat_message_t *message, char *filename) {
   // convert txt file to compressed struct
   compressed_file_t *compressed_file = malloc(sizeof(compressed_file_t));
   file_to_struct(compressed_file, filename);
-  // convert compressed struct to image (TBD)
-
-  // save image
+  // convert compressed struct to image & save image
+  char* temp_file = "image.jpg";
+  getImageFromFile(compressed_file, temp_file);
 
   free(compressed_file);
 }
