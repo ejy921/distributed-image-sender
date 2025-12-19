@@ -65,7 +65,6 @@ void bruteforce_message(chat_message_t *message, uint32_t *key);
  * @param message The message to convert
  * @param filename The filename to save the image
  */
-// Have to integrate with image functions. Not done.
 void convert_chat_to_image(chat_message_t *message, char *filename);
 
 /**

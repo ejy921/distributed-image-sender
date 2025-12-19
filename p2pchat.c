@@ -188,15 +188,20 @@ void *connection_thread(void *peer_socket_fd)
     // check if message is encrypted
     if (!message->encrypted) {
       // if message is not encrypted, display it and forward to all peers
-      ui_display(message->sendername, message->content);
+      char image_jpg_name[1024];
+      sprintf(image_jpg_name, "%s-received.jpg", username);
+      convert_chat_to_image(message, image_jpg_name);
+      show_image(image_jpg_name);
       forward_to_all(peer_socket, message);
     } else if (strcmp(message->receivername, username) != 0) { // if message is encrypted and not for me
       ui_display(message->sendername, "Encrypted message");
       forward_to_all(peer_socket, message);
     } else { // if message is encrypted and for me
-      ui_display(message->sendername, message->content);
       decrypt_message(message, dm_user->key);
-      ui_display(message->sendername, message->content);
+      char image_jpg_name[1024];
+      sprintf(image_jpg_name, "%s-sent.jpg", username);
+      convert_chat_to_image(message, image_jpg_name);
+      show_image(image_jpg_name);
     }
 
     // free message after forwarding
