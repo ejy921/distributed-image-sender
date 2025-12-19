@@ -273,6 +273,12 @@ void *connection_thread(void *peer_socket_fd)
         }
       }
     } else { // if message is encrypted and for me
+      // Display message
+      char encrypt_message[64];
+      sprintf(encrypt_message, "Encrypted message from %s. Decrypting...", dm_user->name);
+      ui_display(dm_user->name, encrypt_message);
+
+      // Decrypt message and display the converted image
       decrypt_message(message, dm_user->key);
       sprintf(image_jpg_name, "%s-received.jpg", username);
       convert_chat_to_image(message, image_jpg_name);
