@@ -154,6 +154,11 @@ static void remove_newline(char *str) {
   }
 }
 
+/**
+ * Convert a file to a compressed_file_t struct.
+ * @param compressed_file_header The struct to fill
+ * @param filename The filename to convert
+ */
 void file_to_struct(compressed_file_t *compressed_file_header,
                     const char *filename) {
   FILE *file = fopen(filename, "r");
@@ -216,6 +221,11 @@ void file_to_struct(compressed_file_t *compressed_file_header,
   return;
 }
 
+/**
+ * Convert a chat message to a image file.
+ * @param message The message to convert
+ * @param filename The filename to save the image
+ */
 void convert_chat_to_image(chat_message_t *message, char *filename) {
   // save message content to txt file
   FILE *file = fopen("receiving_tmp.txt", "w");
@@ -244,6 +254,10 @@ void convert_chat_to_image(chat_message_t *message, char *filename) {
   free(compressed_file);
 }
 
+/**
+ * Show an image file in the terminal.
+ * @param filename The filename to show
+ */
 void show_image(char *filename) {
   // show image
   char command[1024];
