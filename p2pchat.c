@@ -105,7 +105,7 @@ void input_callback(const char* message) {
   snprintf(full_image_path, sizeof(full_image_path), "images/%s", message);
 
   // check if file exists
-  if (!(access(message, F_OK) == 0)) {
+  if (!(access(full_image_path, F_OK) == 0)) {
     // if file does not exist, display error and return
     ui_display("ERR, File does not exist: ", full_image_path);
     return;
