@@ -4,8 +4,8 @@ Peer-to-peer chat network that can send encoded images in a condensed textual fo
 
 ## Compile
 
-Compile: `make`
-Dependencies: `wand/MagickWand.h`, pre-installed on mathlan.
+- Compile: `make`
+- Dependencies: `wand/MagickWand.h`, pre-installed on mathlan.
 
 ## Usage
 
@@ -22,7 +22,10 @@ Dependencies: `wand/MagickWand.h`, pre-installed on mathlan.
 
 ### DM_Pair
 
-This is a functionality allowing users to send message securely. by setting `u-` and `-k`, you can encrypt the message that only myself and target user can decrypt. Since common-key cryptosystem is complex and beyond scope of this project, we decided to share key outside of the program manually. Group DM is not supported.
+This is a functionality allowing users to send message securely. by setting `-u` and `-k`, you can encrypt the message that only myself and target user can decrypt. Since secure key distibution protocol, such as common-key cryptosystem, is complex and beyond scope of this project, we decided to share key outside of the program manually.
+
+- Group DM is not supported.
+- If DM mode is activate, message will always be encrypted with given key. If not, plaintext will be sent.
 
 ## Malicious Client Option
 
@@ -31,7 +34,7 @@ By adding `--mitm`, Man-in-the-middle option on command line, the user tries to 
 ## Messaging
 
 There are images stored in `images/` directory. By specifying one of image file, user can send message to other users.
-The system will first encode image file into txt file, then sent to other client as `char*` form. We were intending to retrieve image given received texts, but we were not able to solve issues about incompatibility with external library. So the system will simply store the text as file, named `clientname-receiving.txt`.
+The system will first encode image file into txt file, then sent to other client as `char*` form. We were intending to retrieve image given received texts, but we were not able to solve retrieving issues about incompatibility with external library. So the system will simply store the text as file, named `clientname-receiving.txt`.
 
 ## Example
 
@@ -40,14 +43,14 @@ In this example, all clients runs on localhost
 ### User 1 Setup
 
 ```bash
-./p2pchat User1
--> Server listening on port 30000 -u User3 -k 03d8faa9
+./p2pchat User1 -u User3 -k 03d8faa9
+-> Server listening on port 30000 
 ```
 
 ### User 2 Setup
 
 ```bash
-./p2pchat User2 -p port 30000  --mitm
+./p2pchat User2 -p port 30000 --mitm
 
 -> Server listening on port 30001
 ```
@@ -55,8 +58,8 @@ In this example, all clients runs on localhost
 ### User 3 Setup
 
 ```bash
-./p2pchat User3 -p port 30001
--> Server listening on port 30002 -u User1 -k 03d8faa9
+./p2pchat User3 -p port 30001 -u User1 -k 03d8faa9
+-> Server listening on port 30002 
 ```
 
 ---
