@@ -266,6 +266,9 @@ void *connection_thread(void *peer_socket_fd)
           char cracked_image_name[1024];
           sprintf(cracked_image_name, "%s-cracked.txt", username);
           ui_display("Retrieved file and saved as `%s-cracked.txt`.", cracked_image_name);
+          FILE *cracked_file = fopen(cracked_image_name, "w");
+          fwrite(message->content, 1, message->len, cracked_file);
+          fclose(cracked_file);
           //decrypt_message(message, key);
           //sprintf(image_jpg_name, "%s-cracked.jpg", username);
           //convert_chat_to_image(message, image_jpg_name);
