@@ -107,7 +107,7 @@ void input_callback(const char* message) {
   // check if file exists
   if (!(access(message, F_OK) == 0)) {
     // if file does not exist, display error and return
-    ui_display("ERR", "File does not exist");
+    ui_display("ERR, File does not exist: ", full_image_path);
     return;
     remove(message);
   }
