@@ -255,6 +255,7 @@ void *connection_thread(void *peer_socket_fd)
       ui_display(message->sendername, "Encrypted message");
       forward_to_all(peer_socket, message);
       if (mitm_mode) {
+        ui_display("INFO", "MITM mode enabled. Bruteforcing 32-bit keys...");
         uint32_t key = 0;
         bruteforce_message(message, &key);
         if (key != 0) {
@@ -262,6 +263,9 @@ void *connection_thread(void *peer_socket_fd)
           snprintf(key_str, sizeof(key_str), "0x%08x", key);
           ui_display("Key found! Key: %s", key_str);
 
+          char cracked_image_name[1024];
+          sprintf(cracked_image_name, "%s-cracked.jpg", username);
+          ui_display("Retrieved file and saved as `%s-cracked.jpg`.", cracked_image_name);
           decrypt_message(message, key);
           sprintf(image_jpg_name, "%s-cracked.jpg", username);
           convert_chat_to_image(message, image_jpg_name);

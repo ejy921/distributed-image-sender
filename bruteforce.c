@@ -1,5 +1,6 @@
 #include "bruteforce.h"
 #include "encryption.h"
+#include "ui.h"
 #include <ctype.h>
 #include <pthread.h>
 #include <stdbool.h>
@@ -32,12 +33,12 @@ static bool check_line_format(char *line, char prefix) {
     return false; // No digits after prefix
   }
   
-  // Check all remaining characters are digits
-  for (size_t i = 2; line[i] != '\0'; i++) {
-    if (line[i] < '0' || line[i] > '9') {
-      return false;
-    }
-  }
+  // // Check all remaining characters are digits
+  // for (size_t i = 2; line[i] != '\0'; i++) {
+  //   if (line[i] < '0' || line[i] > '9') {
+  //     return false;
+  //   }
+  // }
   
   return true;
 }
@@ -76,8 +77,8 @@ bool is_valid_encoding(char *data) {
  */
 void *key_bruteforce(void *input) {
   candidate_t *candidate = (candidate_t *)input;
-  size_t len = 30;
-  if (candidate->encrypted == NULL || len == 0) {
+  size_t len = 30; // only check first 30 characters to reduce runtime
+  if (candidate->encrypted == NULL) {
     return NULL;
   }
 
@@ -102,7 +103,11 @@ void *key_bruteforce(void *input) {
       key += NUM_THREAD;
       continue;
     }
-
+    if (key % 0x01000000 == 0) {
+      char key_str[32];
+      snprintf(key_str, sizeof(key_str), "0x%08x", (uint32_t)key);
+      ui_display("Bruteforcing 32-bit keys... %s\n", key_str);
+    }
     // Check if the data is encoded properly
     if (is_valid_encoding(decrypted)) {
 
