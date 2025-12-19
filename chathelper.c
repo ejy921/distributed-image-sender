@@ -150,15 +150,17 @@ void file_to_struct(compressed_file_t *compressed_file_header,
   getline(&line, &len, file);
   char *ptr = strchr(line, ':');
   compressed_file_header->w = atoi(ptr + 1);
-
+  printf("Width: %d\n", compressed_file_header->w);
   // line 2: height
   getline(&line, &len, file);
   ptr = strchr(line, ':');
   compressed_file_header->h = atoi(ptr + 1);
+  printf("Height: %d\n", compressed_file_header->h);
   // line 3: contents length
   getline(&line, &len, file);
   ptr = strchr(line, ':');
   compressed_file_header->contents_length = atoi(ptr + 1);
+  printf("Contents length: %d\n", compressed_file_header->contents_length);
   // line 4: contents
   getline(&line, &len, file);
   compressed_file_header->contents = malloc(compressed_file_header->contents_length);
@@ -178,8 +180,7 @@ void convert_chat_to_image(chat_message_t *message, char *filename) {
   compressed_file_t *compressed_file = malloc(sizeof(compressed_file_t));
 
   char contents_length_str[32];
-  printf("Contents length: %d\n", compressed_file->contents_length);
-  snprintf(contents_length_str, sizeof(contents_length_str), "%d", compressed_file->contents_length);
+  snprintf(contents_length_str, sizeof(contents_length_str), "%d\n", compressed_file->contents_length);
   ui_display("Contents length", contents_length_str);
   file_to_struct(compressed_file, "receiving_tmp.txt");
   // convert compressed struct to image & save image
