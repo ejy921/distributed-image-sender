@@ -97,6 +97,13 @@ void input_callback(const char* message) {
     ui_display("ERR", "Message is not a path to image file, omitting images/");
     return;
   }
+
+  ui_display(username, message);
+
+  // get full image path by adding images/ to message
+  char full_image_path[1024];
+  snprintf(full_image_path, sizeof(full_image_path), "images/%s", message);
+
   // check if file exists
   if (!(access(message, F_OK) == 0)) {
     // if file does not exist, display error and return
@@ -104,11 +111,7 @@ void input_callback(const char* message) {
     return;
     remove(message);
   }
-  ui_display(username, message);
 
-  // get full image path by adding images/ to message
-  char full_image_path[1024];
-  snprintf(full_image_path, sizeof(full_image_path), "images/%s", message);
   char image_name[1024];
   snprintf(image_name, sizeof(image_name), "%s-sending.txt", username);
 
