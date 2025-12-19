@@ -166,8 +166,6 @@ void input_callback(const char* message) {
   remove("tmp.txt");
 
   free(content);
-  free(output_image);
-  free(fileptr);
 }
 
 // forward message to all peers except sender

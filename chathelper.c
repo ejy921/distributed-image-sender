@@ -170,6 +170,9 @@ void file_to_struct(compressed_file_t *compressed_file_header,
 void convert_chat_to_image(chat_message_t *message, char *filename) {
   // save content as txt file
   FILE *file = fopen(filename, "w");
+  printf("Writing to file: %s\n", filename);
+  printf("Content: %s\n", message->content);
+  printf("Length: %zu\n", message->len);
   fwrite(message->content, 1, message->len, file);
   fclose(file);
   // convert txt file to compressed struct
