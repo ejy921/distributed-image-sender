@@ -6,8 +6,8 @@ all: p2pchat magick-demo
 clean:
 	rm -f p2pchat
 
-p2pchat: p2pchat.c ui.c ui.h message.c message.h chathelper.c chathelper.h encryption.c encryption.h bruteforce.c bruteforce.h
-	$(CC) $(CFLAGS) -o p2pchat p2pchat.c ui.c message.c chathelper.c encryption.c bruteforce.c -lform -lncurses -lpthread
+p2pchat: p2pchat.c ui.c ui.h message.c message.h chathelper.c chathelper.h encryption.c encryption.h bruteforce.c bruteforce.h image.c image.h
+	$(CC) $(CFLAGS) -o p2pchat p2pchat.c ui.c message.c chathelper.c encryption.c bruteforce.c image.c -lform -lncurses -lpthread $(LDFLAGS)
 
 magick-demo: magick-demo.c image.c image.h
 	$(CC) $(CFLAGS) -o magick-demo magick-demo.c image.c $(LDFLAGS)
