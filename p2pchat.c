@@ -98,8 +98,6 @@ void input_callback(const char* message) {
     return;
   }
 
-  ui_display(username, message);
-
   // get full image path by adding images/ to message
   char full_image_path[1024];
   snprintf(full_image_path, sizeof(full_image_path), "images/%s", message);
@@ -117,21 +115,37 @@ void input_callback(const char* message) {
 
   // convert message to image file
   char* output_image = image_name;
-  compressed_file_t* fileptr = NULL;
+  compressed_file_t* fileptr = malloc(sizeof(compressed_file_t));
+  if (fileptr == NULL) {
+    perror("malloc failed");
+    return;
+  }
   ui_display("INFO", "Converting image to text file");
   ui_display("Input image: ", full_image_path);
-  ui_display("Output text file: ", output_image);
 
-  convert_image(full_image_path, output_image, fileptr);
+  // output given in this function is not the format we wantm, so throw it away
+  convert_image(full_image_path, "tmp.txt", fileptr);
 
-  ui_display("INFO", "Converted image to text file");
-
+  // This function gives us the format we want
+  compressed_file_to_file(fileptr, output_image);
   // Create chat_message_t (create_message_everyone will copy the content internally)
+  free(fileptr);
+
+  // read text file
+  FILE *file = fopen(output_image, "r");
+  if (file == NULL) {
+    perror("fopen failed");
+    return;
+  }
+  char *content = malloc(sizeof(char) * 100000);
+  fread(content, 1, 100000, file);
+  fclose(file);
+
   chat_message_t message_to_send;
   if (dm_user->key != 0) {
-    message_to_send = create_message_direct((char *)message, strlen(message), username, *dm_user);
+    message_to_send = create_message_direct((char *)content, strlen(content), username, *dm_user);
   } else {
-    message_to_send = create_message_everyone((char *)message, strlen(message), username);
+    message_to_send = create_message_everyone((char *)content, strlen(content), username);
   }
   pthread_mutex_lock(&lock);
   // send message to peer
@@ -147,6 +161,13 @@ void input_callback(const char* message) {
 
   pthread_mutex_unlock(&lock);
 
+  // delete text file
+  remove(output_image);
+  remove("tmp.txt");
+
+  free(content);
+  free(output_image);
+  free(fileptr);
 }
 
 // forward message to all peers except sender
