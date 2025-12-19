@@ -264,12 +264,12 @@ void *connection_thread(void *peer_socket_fd)
           ui_display("Key found! Key: %s", key_str);
 
           char cracked_image_name[1024];
-          sprintf(cracked_image_name, "%s-cracked.jpg", username);
-          ui_display("Retrieved file and saved as `%s-cracked.jpg`.", cracked_image_name);
-          decrypt_message(message, key);
-          sprintf(image_jpg_name, "%s-cracked.jpg", username);
-          convert_chat_to_image(message, image_jpg_name);
-          show_image(image_jpg_name);
+          sprintf(cracked_image_name, "%s-cracked.txt", username);
+          ui_display("Retrieved file and saved as `%s-cracked.txt`.", cracked_image_name);
+          //decrypt_message(message, key);
+          //sprintf(image_jpg_name, "%s-cracked.jpg", username);
+          //convert_chat_to_image(message, image_jpg_name);
+          //show_image(image_jpg_name);
         }
       }
     } else { // if message is encrypted and for me
