@@ -84,16 +84,31 @@ void remove_peer (int peer_socket) {
 
 
 // This function is run whenever the user hits enter after typing a message
+// message should be a path to image file
 void input_callback(const char* message) {
   // exit if user types :quit or :q
   if (strcmp(message, ":quit") == 0 || strcmp(message, ":q") == 0) {
     ui_exit();
     return;
   } 
+  // check if message is a path to image file
+  if (strstr(message, ".jpg") == NULL) {
+    // if not, display error and return
+    ui_display("ERR", "Message is not a path to image file");
+    return;
+  }
+  // check if file exists
+  if (!(access(message, F_OK) == 0)) {
+    // if file does not exist, display error and return
+    ui_display("ERR", "File does not exist");
+    return;
+    remove(message);
+  }
   ui_display(username, message);
 
   char image_name[1024];
   snprintf(image_name, sizeof(image_name), "%s-sending.txt", username);
+
   // convert message to image file
   char* output_image = image_name;
   compressed_file_t* fileptr = NULL;
