@@ -1,6 +1,7 @@
 #include "chathelper.h"
 #include "bruteforce.h"
 #include "encryption.h"
+#include "ui.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -168,19 +169,16 @@ void file_to_struct(compressed_file_t *compressed_file_header,
 }
 
 void convert_chat_to_image(chat_message_t *message, char *filename) {
-  // save content as txt file
-  FILE *file = fopen(filename, "w");
-  printf("Writing to file: %s\n", filename);
-  printf("Content: %s\n", message->content);
-  printf("Length: %zu\n", message->len);
-  fwrite(message->content, 1, message->len, file);
-  fclose(file);
+  ui_display("info", message->content);
+  char len_str[32];
+  snprintf(len_str, sizeof(len_str), "%zu", message->len);
+  ui_display("info", len_str);
   // convert txt file to compressed struct
   compressed_file_t *compressed_file = malloc(sizeof(compressed_file_t));
-  file_to_struct(compressed_file, filename);
+  //file_to_struct(compressed_file, filename);
   // convert compressed struct to image & save image
   char* temp_file = "image.jpg";
-  getImageFromFile(compressed_file, temp_file);
+  //getImageFromFile(compressed_file, temp_file);
 
   free(compressed_file);
 }
