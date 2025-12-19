@@ -1,10 +1,10 @@
+#include "encryption.h"
 #include <ctype.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "encryption.h"
 
 /**
  * Generates a 32-bit random number using XORShift algorithm

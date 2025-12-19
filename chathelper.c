@@ -21,15 +21,15 @@ chat_message_t create_message_everyone(char *content, size_t len,
   chat_message_t msg = {0};
   msg.encrypted = false;
   msg.len = len;
-  
+
   // Copy content to fixed-length array
   memcpy(msg.content, content, msg.len);
   msg.content[msg.len] = '\0';
-  
+
   // Copy sendername to fixed-length array
   strncpy(msg.sendername, sendername, MAX_NAME_LENGTH - 1);
   msg.sendername[MAX_NAME_LENGTH - 1] = '\0';
-  
+
   return msg;
 }
 
@@ -47,20 +47,20 @@ chat_message_t create_message_direct(char *content, size_t len,
   chat_message_t msg = {0};
   msg.encrypted = true;
   msg.len = len;
-  
+
   // Copy content to fixed-length array before encryption
   memcpy(msg.content, content, msg.len);
   // Encrypt in place
   encrypt(msg.content, msg.len, dm_user.key);
-  
+
   // Copy sendername to fixed-length array
   strncpy(msg.sendername, sendername, MAX_NAME_LENGTH - 1);
   msg.sendername[MAX_NAME_LENGTH - 1] = '\0';
-  
+
   // Copy receivername to fixed-length array
   strncpy(msg.receivername, dm_user.name, MAX_NAME_LENGTH - 1);
   msg.receivername[MAX_NAME_LENGTH - 1] = '\0';
-  
+
   return msg;
 }
 
@@ -108,11 +108,12 @@ user_t create_dm_user(char *name, char *key) {
  * @param argc Number of arguments
  * @param argv Arguments
  */
-void parse_args(int argc, char **argv, destination_t *dest, user_t *user, bool *mitm_mode) {
+void parse_args(int argc, char **argv, destination_t *dest, user_t *user,
+                bool *mitm_mode) {
   dest->host = "localhost";
   user->key = 0;
   *mitm_mode = false;
-  
+
   for (int i = 2; i < argc; i++) {
     if (strcmp(argv[i], "-h") == 0) { // if -h is given, set host
       dest->host = argv[i + 1];
@@ -126,7 +127,8 @@ void parse_args(int argc, char **argv, destination_t *dest, user_t *user, bool *
     } else if (strcmp(argv[i], "-k") == 0) { // if -k is given, set user key
       user->key = hex_string_to_uint32(argv[i + 1]);
       i++;
-    } else if (strcmp(argv[i], "--mitm") == 0) { // if --mitm is given, set mitm mode
+    } else if (strcmp(argv[i], "--mitm") ==
+               0) { // if --mitm is given, set mitm mode
       *mitm_mode = true;
     } else { // if unknown argument is given, print error and exit
       fprintf(stderr, "Unknown argument: %s\n", argv[i]);
@@ -140,7 +142,8 @@ void parse_args(int argc, char **argv, destination_t *dest, user_t *user, bool *
  * @param str The string to modify (NULL-safe)
  */
 static void remove_newline(char *str) {
-  if (str == NULL) return;
+  if (str == NULL)
+    return;
   size_t len = strlen(str);
   if (len > 0 && str[len - 1] == '\n') {
     str[len - 1] = '\0';
@@ -179,7 +182,7 @@ void file_to_struct(compressed_file_t *compressed_file_header,
     return;
   }
   compressed_file_header->w = atoi(ptr + 1);
-  
+
   // line 2: height
   if (getline(&line, &len, file) == -1) {
     fprintf(stderr, "Error: Failed to read line 2 (height)\n");
@@ -190,7 +193,7 @@ void file_to_struct(compressed_file_t *compressed_file_header,
   remove_newline(line);
   ptr = strchr(line, ':');
   compressed_file_header->h = atoi(ptr + 1);
-  
+
   // line 3: contents length
   if (getline(&line, &len, file) == -1) {
     fprintf(stderr, "Error: Failed to read line 3 (contents length)\n");
@@ -201,10 +204,11 @@ void file_to_struct(compressed_file_t *compressed_file_header,
   remove_newline(line);
   ptr = strchr(line, ':');
   compressed_file_header->contents_length = atoi(ptr + 1);
-  
+
   // line 4: contents
   getline(&line, &len, file);
-  compressed_file_header->contents = malloc(compressed_file_header->contents_length);
+  compressed_file_header->contents =
+      malloc(compressed_file_header->contents_length);
   memcpy(compressed_file_header->contents, line, strlen(line));
 
   free(line);
@@ -226,7 +230,8 @@ void convert_chat_to_image(chat_message_t *message, char *filename) {
   char contents_length_str[32];
   snprintf(width_str, sizeof(width_str), "Width: %d\n", compressed_file->w);
   snprintf(height_str, sizeof(height_str), "Height: %d\n", compressed_file->h);
-  snprintf(contents_length_str, sizeof(contents_length_str), "Contents length: %d\n", compressed_file->contents_length);
+  snprintf(contents_length_str, sizeof(contents_length_str),
+           "Contents length: %d\n", compressed_file->contents_length);
   ui_display("Width", width_str);
   ui_display("Height", height_str);
   ui_display("Contents length", contents_length_str);

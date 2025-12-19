@@ -2,36 +2,32 @@
 #include "chathelper.h"
 
 #include <errno.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <stdbool.h>
-
 
 // Send a across a socket with a header that includes the message length.
-int send_message(int fd, char *message)
-{
+int send_message(int fd, char *message) {
   // If the message is NULL, set errno to EINVAL and return an error
-  if (message == NULL)
-  {
+  if (message == NULL) {
     errno = EINVAL;
     return -1;
   }
 
   // First, send the length of the message in a size_t
   size_t len = strlen(message);
-  if (write(fd, &len, sizeof(size_t)) != sizeof(size_t))
-  {
+  if (write(fd, &len, sizeof(size_t)) != sizeof(size_t)) {
     // Writing failed, so return an error
     return -1;
   }
 
-  // Now we can send the message. Loop until the entire message has been written.
+  // Now we can send the message. Loop until the entire message has been
+  // written.
   size_t bytes_written = 0;
-  while (bytes_written < len)
-  {
+  while (bytes_written < len) {
     // Try to write the entire remaining message
     ssize_t rc = write(fd, message + bytes_written, len - bytes_written);
 
@@ -46,20 +42,18 @@ int send_message(int fd, char *message)
   return 0;
 }
 
-// Receive a message from a socket and return the message string (which must be freed later)
-char *receive_message(int fd)
-{
+// Receive a message from a socket and return the message string (which must be
+// freed later)
+char *receive_message(int fd) {
   // First try to read in the message length
   size_t len;
-  if (read(fd, &len, sizeof(size_t)) != sizeof(size_t))
-  {
+  if (read(fd, &len, sizeof(size_t)) != sizeof(size_t)) {
     // Reading failed. Return an error
     return NULL;
   }
 
   // Now make sure the message length is reasonable
-  if (len > MAX_MESSAGE_LENGTH)
-  {
+  if (len > MAX_MESSAGE_LENGTH) {
     errno = EINVAL;
     return NULL;
   }
@@ -69,14 +63,12 @@ char *receive_message(int fd)
 
   // Try to read the message. Loop until the entire message has been read.
   size_t bytes_read = 0;
-  while (bytes_read < len)
-  {
+  while (bytes_read < len) {
     // Try to read the entire remaining message
     ssize_t rc = read(fd, result + bytes_read, len - bytes_read);
 
     // Did the read fail? If so, return an error
-    if (rc <= 0)
-    {
+    if (rc <= 0) {
       free(result);
       return NULL;
     }
@@ -92,15 +84,14 @@ char *receive_message(int fd)
 }
 
 // Send a chat_message_t structure across a socket
-int send_chat_message(int fd, chat_message_t *message)
-{
+int send_chat_message(int fd, chat_message_t *message) {
 
   // Send the entire structure
   size_t total_size = sizeof(chat_message_t);
   size_t bytes_written = 0;
-  while (bytes_written < total_size)
-  {
-    ssize_t rc = write(fd, (char *)message + bytes_written, total_size - bytes_written);
+  while (bytes_written < total_size) {
+    ssize_t rc =
+        write(fd, (char *)message + bytes_written, total_size - bytes_written);
     if (rc <= 0)
       return -1;
     bytes_written += rc;
@@ -111,22 +102,18 @@ int send_chat_message(int fd, chat_message_t *message)
 
 // Receive a chat_message_t structure from a socket
 // Since chat_message_t is now fixed-length, we can read it directly
-chat_message_t *receive_chat_message(int fd)
-{
+chat_message_t *receive_chat_message(int fd) {
   chat_message_t *result = malloc(sizeof(chat_message_t));
-  if (result == NULL)
-  {
+  if (result == NULL) {
     return NULL;
   }
 
   // Read the entire structure
   size_t total_size = sizeof(chat_message_t);
   size_t bytes_read = 0;
-  while (bytes_read < total_size)
-  {
+  while (bytes_read < total_size) {
     ssize_t rc = read(fd, (char *)result + bytes_read, total_size - bytes_read);
-    if (rc <= 0)
-    {
+    if (rc <= 0) {
       free(result);
       return NULL;
     }

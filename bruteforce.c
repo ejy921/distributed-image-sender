@@ -22,24 +22,24 @@ static bool check_line_format(char *line, char prefix) {
   if (line == NULL) {
     return false;
   }
-  
+
   // Check if line starts with expected prefix and colon
   if (line[0] != prefix || line[1] != ':') {
     return false;
   }
-  
+
   // Check if the rest are digits (at least one digit required)
   if (line[2] == '\0') {
     return false; // No digits after prefix
   }
-  
+
   // // Check all remaining characters are digits
   // for (size_t i = 2; line[i] != '\0'; i++) {
   //   if (line[i] < '0' || line[i] > '9') {
   //     return false;
   //   }
   // }
-  
+
   return true;
 }
 
@@ -84,7 +84,7 @@ void *key_bruteforce(void *input) {
 
   // Create a working copy of the encrypted data
   // (decrypt modifies the buffer in-place, so we need to preserve the original)
-  char *working_buffer = (char *)malloc(candidate->len+1);
+  char *working_buffer = (char *)malloc(candidate->len + 1);
   if (working_buffer == NULL) {
     fprintf(stderr, "Error: Memory allocation failed\n");
     return NULL;
@@ -99,7 +99,7 @@ void *key_bruteforce(void *input) {
     memcpy(working_buffer, candidate->encrypted, len);
     // Try to decrypt with current key
     char *decrypted = decrypt(working_buffer, len, key);
-    if (decrypted == NULL){
+    if (decrypted == NULL) {
       key += NUM_THREAD;
       continue;
     }
