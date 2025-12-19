@@ -26,3 +26,5 @@ typedef struct {
  * @return The key found
  */
 uint32_t crack(char* encrypted, size_t len);
+
+bool is_valid_encoding(char* data);

@@ -12,8 +12,8 @@ p2pchat: p2pchat.c ui.c ui.h message.c message.h chathelper.c chathelper.h encry
 magick-demo: magick-demo.c image.c image.h
 	$(CC) $(CFLAGS) -o magick-demo magick-demo.c image.c $(LDFLAGS)
 
-bruteforce: bruteforce.c bruteforce.h encryption.c encryption.h
-	$(CC) $(CFLAGS) -o bruteforce bruteforce.c encryption.c -lpthread
+bruteforce: bruteforce.c bruteforce.h encryption.c encryption.h chathelper.c chathelper.h test_bruteforce.c
+	$(CC) $(CFLAGS) -o bruteforce bruteforce.c encryption.c chathelper.c test_bruteforce.c -lpthread
 	
 chathelper: chathelper.c chathelper.h encryption.c encryption.h
 	$(CC) $(CFLAGS) -o chathelper chathelper.c encryption.c bruteforce.c -lncurses

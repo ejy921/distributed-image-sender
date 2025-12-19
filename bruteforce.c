@@ -2,7 +2,6 @@
 #include "encryption.h"
 #include <ctype.h>
 #include <pthread.h>
-#include <regex.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -13,70 +12,57 @@
 static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
 /**
+ * Helper function to check if a line matches pattern "X:[0-9]+"
+ * @param line The line to check
+ * @param prefix Expected prefix character (e.g., 'W', 'H', 'L')
+ * @return true if line matches pattern, false otherwise
+ */
+static bool check_line_format(char *line, char prefix) {
+  if (line == NULL) {
+    return false;
+  }
+  
+  // Check if line starts with expected prefix and colon
+  if (line[0] != prefix || line[1] != ':') {
+    return false;
+  }
+  
+  // Check if the rest are digits (at least one digit required)
+  if (line[2] == '\0') {
+    return false; // No digits after prefix
+  }
+  
+  // Check all remaining characters are digits
+  for (size_t i = 2; line[i] != '\0'; i++) {
+    if (line[i] < '0' || line[i] > '9') {
+      return false;
+    }
+  }
+  
+  return true;
+}
+
+/**
  * Checks if the decrypted data has valid character and order
+ * Checks Line 1: W:[0-9]+, Line 2: H:[0-9]+
  *
  * @param data Decrypted data buffer
  * @param len Length of the data
  * @return 1 if the data is invalid format, 0 otherwise
  * Format:
- * Line 1: W:\d+
- * Line 2: H:\d+
- * Line 3: L:\d+
- * Line 4: contents: [0-9a-z{]+
+ * Line 1: W:[0-9]+
+ * Line 2: H:[0-9]+
  */
-static bool is_valid_encoding(char *data) {
-  // split by new line
-  // use regex to check if the data is valid
-  char *line = strtok(data, "\n");
-  regex_t regex;
-
+bool is_valid_encoding(char *data) {
   // Line 1: W: <width>
-  if (line == NULL) {
+  char *line = strtok(data, "\n");
+  if (!check_line_format(line, 'W')) {
     return false;
   }
-  regcomp(&regex, "^W:[0-9]+$", REG_EXTENDED);
-  if (regexec(&regex, line, 0, NULL, 0) != 0) {
-    regfree(&regex);
-    return false;
-  }
-  regfree(&regex);
-
   // Line 2: H: <height>
   line = strtok(NULL, "\n");
-  if (line == NULL) {
+  if (!check_line_format(line, 'H')) {
     return false;
-  }
-  regcomp(&regex, "^H:[0-9]+$", REG_EXTENDED);
-  if (regexec(&regex, line, 0, NULL, 0) != 0) {
-    regfree(&regex);
-    return false;
-  }
-  regfree(&regex);
-
-  // Line 3: L: <contents length>
-  line = strtok(NULL, "\n");
-  if (line == NULL) {
-    return false;
-  }
-  regcomp(&regex, "^L:[0-9]+$", REG_EXTENDED);
-  if (regexec(&regex, line, 0, NULL, 0) != 0) {
-    regfree(&regex);
-    return false;
-  }
-  regfree(&regex);
-
-  // Line 4: <contents>
-  // check if the contents is valid. Regex library seems to work for only <2^15
-  // characters.
-  line = strtok(NULL, "\n");
-  if (line == NULL) {
-    return false;
-  }
-  for (size_t i = 0; line[i] != '\0'; i++) {
-    char c = line[i];
-    if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || c == '{')) {
-      return false;
-    }
   }
   return true;
 }
@@ -90,14 +76,14 @@ static bool is_valid_encoding(char *data) {
  */
 void *key_bruteforce(void *input) {
   candidate_t *candidate = (candidate_t *)input;
-  size_t len = candidate->len;
+  size_t len = 30;
   if (candidate->encrypted == NULL || len == 0) {
     return NULL;
   }
 
   // Create a working copy of the encrypted data
   // (decrypt modifies the buffer in-place, so we need to preserve the original)
-  char *working_buffer = (char *)malloc(candidate->len);
+  char *working_buffer = (char *)malloc(candidate->len+1);
   if (working_buffer == NULL) {
     fprintf(stderr, "Error: Memory allocation failed\n");
     return NULL;
@@ -110,18 +96,21 @@ void *key_bruteforce(void *input) {
     // Copy encrypted data to working buffer because decryption takes place
     // in-memory
     memcpy(working_buffer, candidate->encrypted, len);
-
     // Try to decrypt with current key
     char *decrypted = decrypt(working_buffer, len, key);
-
-    if (decrypted == NULL)
+    if (decrypted == NULL){
+      key += NUM_THREAD;
       continue;
+    }
+
     // Check if the data is encoded properly
     if (is_valid_encoding(decrypted)) {
 
       // Set result
       pthread_mutex_lock(&lock);
       *candidate->done = true;
+      // Decrypt again, because validation modifies the buffer
+      decrypt(working_buffer, len, key);
       memcpy(candidate->decrypted, decrypted, len);
       *candidate->key = key;
       pthread_mutex_unlock(&lock);
@@ -158,6 +147,10 @@ uint32_t crack(char *encrypted, size_t len) {
   }
 
   key = *candidates[0].key;
+  if (key == 0) {
+    fprintf(stderr, "Error: No key found\n");
+    exit(1);
+  }
   free(decrypted);
   return key;
 }

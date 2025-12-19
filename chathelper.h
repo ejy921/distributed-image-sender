@@ -19,7 +19,7 @@ typedef struct {
   unsigned short port;
 } destination_t;
 
-#define MAX_CONTENT_LENGTH 65536
+#define MAX_CONTENT_LENGTH 100000
 #define MAX_NAME_LENGTH 64
 
 typedef struct {
