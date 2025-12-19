@@ -237,26 +237,6 @@ void* listener_thread(void* input)
     // add the connection to peer list
     add_peer(peer_client_socket, peer_username);
 
-    // notify all peers about new peer
-    pthread_mutex_lock(&lock);
-    for (peer_list_t* curr = list; curr != NULL; curr = curr->next) {
-      if (curr->socket_fd != peer_client_socket) {
-        send_message(curr->socket_fd, "NEW_PEER");
-      }
-    }
-    pthread_mutex_unlock(&lock);
-
-
-    // notify new peer about all existing peers
-    pthread_mutex_lock(&lock);
-    for (peer_list_t *curr = list; curr != NULL; curr = curr->next)
-    {
-      if (curr->socket_fd != peer_client_socket) {
-        send_message(peer_client_socket, "EXISTING_PEER");
-      }
-    }
-    pthread_mutex_unlock(&lock);
-
     // create a new connection thread
     pthread_t connection_p;
     pthread_create(&connection_p, NULL, connection_thread, (void *)(long)peer_client_socket);
