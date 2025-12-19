@@ -171,7 +171,6 @@ void file_to_struct(compressed_file_t *compressed_file_header,
     return;
   }
   remove_newline(line);
-  printf("DEBUG: Line 1: [%s]\n", line);
   char *ptr = strchr(line, ':');
   if (ptr == NULL) {
     fprintf(stderr, "Error: Colon not found in line 1: [%s]\n", line);
@@ -180,7 +179,6 @@ void file_to_struct(compressed_file_t *compressed_file_header,
     return;
   }
   compressed_file_header->w = atoi(ptr + 1);
-  printf("Width: %d\n", compressed_file_header->w);
   
   // line 2: height
   if (getline(&line, &len, file) == -1) {
@@ -190,16 +188,8 @@ void file_to_struct(compressed_file_t *compressed_file_header,
     return;
   }
   remove_newline(line);
-  printf("DEBUG: Line 2: [%s]\n", line);
   ptr = strchr(line, ':');
-  if (ptr == NULL) {
-    fprintf(stderr, "Error: Colon not found in line 2: [%s]\n", line);
-    free(line);
-    fclose(file);
-    return;
-  }
   compressed_file_header->h = atoi(ptr + 1);
-  printf("Height: %d\n", compressed_file_header->h);
   
   // line 3: contents length
   if (getline(&line, &len, file) == -1) {
@@ -209,16 +199,9 @@ void file_to_struct(compressed_file_t *compressed_file_header,
     return;
   }
   remove_newline(line);
-  printf("DEBUG: Line 3: [%s]\n", line);
   ptr = strchr(line, ':');
-  if (ptr == NULL) {
-    fprintf(stderr, "Error: Colon not found in line 3: [%s]\n", line);
-    free(line);
-    fclose(file);
-    return;
-  }
   compressed_file_header->contents_length = atoi(ptr + 1);
-  printf("Contents length: %d\n", compressed_file_header->contents_length);
+  
   // line 4: contents
   getline(&line, &len, file);
   compressed_file_header->contents = malloc(compressed_file_header->contents_length);
@@ -237,8 +220,14 @@ void convert_chat_to_image(chat_message_t *message, char *filename) {
   // convert txt file to compressed struct
   compressed_file_t *compressed_file = malloc(sizeof(compressed_file_t));
 
+  char width_str[32];
+  char height_str[32];
   char contents_length_str[32];
-  snprintf(contents_length_str, sizeof(contents_length_str), "%d\n", compressed_file->contents_length);
+  snprintf(contents_length_str, sizeof(contents_length_str), "Width: %d\n", compressed_file->w);
+  snprintf(contents_length_str, sizeof(contents_length_str), "Height: %d\n", compressed_file->h);
+  snprintf(contents_length_str, sizeof(contents_length_str), "Contents length: %d\n", compressed_file->contents_length);
+  ui_display("Width", contents_length_str);
+  ui_display("Height", contents_length_str);
   ui_display("Contents length", contents_length_str);
   file_to_struct(compressed_file, "receiving_tmp.txt");
   // convert compressed struct to image & save image
