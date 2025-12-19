@@ -73,6 +73,8 @@ colorwheel.jpg
 
 Note that it may take few seconds to encode image into text format.
 
+Tested with colowheel.jpg. Other file may not work, when the size is too big.
+
 ### User 2 Expected Output
 
 ```bash
